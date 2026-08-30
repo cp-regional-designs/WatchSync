@@ -2981,3 +2981,47 @@ main, .pages, .page {
     gap: 12px;
   }
 }
+
+
+/* Home + topbar: shared avatar host (PFP + ring overlay, no URL-as-text) */
+#homeAvatar.avatar-host,
+.home-avatar {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  border-radius: 0 !important;
+  overflow: visible;
+}
+#homeAvatar .avatar-wrapper {
+  --avatar-outer: 64px;
+}
+#homeAvatar .avatar-wrapper.has-ring {
+  --avatar-outer: 72px; /* ring slightly larger; core hole keeps PFP readable */
+}
+.me-avatar-host.avatar-host {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  border-radius: 0 !important;
+  overflow: visible;
+  padding: 0;
+}
+.me-avatar-host .avatar-wrapper {
+  --avatar-outer: 28px;
+}
+.me-avatar-host .avatar-wrapper.has-ring {
+  --avatar-outer: 32px;
+}
+.me-chip {
+  overflow: visible;
+}
+.welcome-row {
+  align-items: center;
+}

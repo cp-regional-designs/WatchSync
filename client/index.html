@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@500;700&family=Dancing+Script:wght@500;600&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;600&family=Nunito:wght@600;700;800&family=Outfit:wght@400;500;600;700;800&family=Pacifico&family=Plus+Jakarta+Sans:wght@500;600;700&family=Poppins:wght@400;600;700;800&family=Press+Start+2P&family=Quicksand:wght@500;600;700&family=Rubik:wght@500;600;700&family=Space+Grotesk:wght@500;600;700&family=VT323&display=swap" rel="stylesheet">
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="stylesheet" href="/style.css?v=rings1" />
+  <link rel="stylesheet" href="/style.css?v=legacyRings1" />
 </head>
 <body>
   <div id="app">
@@ -35,7 +35,7 @@
           <strong>WatchSync</strong>
         </div>
         <button id="meBtn" class="me-chip" type="button">
-          <span id="meAvatar"><i data-lucide="film"></i></span>
+          <span id="meAvatar" class="avatar-host me-avatar-host"></span>
           <span id="meName">Guest</span>
         </button>
       </header>
@@ -45,7 +45,7 @@
         <section class="page active" data-page="home">
           <div class="welcome glass">
             <div class="welcome-row">
-              <div id="homeAvatar" class="avatar-lg"><i data-lucide="film"></i></div>
+              <div id="homeAvatar" class="avatar-host home-avatar" aria-hidden="false"></div>
               <div>
                 <h2 id="welcomeTitle">Welcome back</h2>
                 <p class="muted">Ready for movie night?</p>
@@ -365,8 +365,8 @@
     if (shell) shell.classList.remove("hidden");
     var meName = document.getElementById("meName");
     var meAvatar = document.getElementById("meAvatar");
-    if (meName) meName.textContent = profile.name;
-    if (meAvatar) meAvatar.textContent = profile.avatar;
+    if (meName) meName.textContent = profile.displayName || profile.name;
+    // Avatar+ring painted by app.js after ws-entered (paintAvatar)
     window.__wsProfile = profile;
     window.dispatchEvent(new CustomEvent("ws-entered", { detail: profile }));
     return false;
@@ -384,17 +384,17 @@
     }
   });
   </script>
-  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js?v=rings1"></script>
-  <script src="/socket.io/socket.io.js?v=rings1"></script>
-  <script src="/config.js?v=rings1"></script>
-  <script src="/providers/vidking.js?v=rings1"></script>
-  <script src="/providers/youtube.js?v=rings1"></script>
-  <script src="/providers/html5.js?v=rings1"></script>
-  <script src="/components/player.js?v=rings1"></script>
-  <script src="/components/movies.js?v=rings1"></script>
-  <script src="/components/cosmetics.js?v=rings1"></script>
-  <script src="/components/voice.js?v=rings1"></script>
-  <script src="/app.js?v=rings1"></script>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js?v=legacyRings1"></script>
+  <script src="/socket.io/socket.io.js?v=legacyRings1"></script>
+  <script src="/config.js?v=legacyRings1"></script>
+  <script src="/providers/vidking.js?v=legacyRings1"></script>
+  <script src="/providers/youtube.js?v=legacyRings1"></script>
+  <script src="/providers/html5.js?v=legacyRings1"></script>
+  <script src="/components/player.js?v=legacyRings1"></script>
+  <script src="/components/movies.js?v=legacyRings1"></script>
+  <script src="/components/cosmetics.js?v=legacyRings1"></script>
+  <script src="/components/voice.js?v=legacyRings1"></script>
+  <script src="/app.js?v=legacyRings1"></script>
 </body>
 </html>
 

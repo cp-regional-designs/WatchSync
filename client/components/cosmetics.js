@@ -26,6 +26,19 @@
       colors: ["#9D5CFF", "#6D28D9"],
       hole: 100,
     },
+    /* LEGACY — do not rename/remove; users already have this equipped */
+    {
+      id: "frame_pink_hearts",
+      name: "Hearts",
+      src: "/assets/frames/ring_pink_hearts.png",
+      rarity: "legendary",
+      image: true,
+      cat: "frame",
+      colors: ["#ff4d8d", "#ff8fab"],
+      hole: 58,
+      legacy: true,
+    },
+    /* NEW additive rings (exact filenames from assets) */
     {
       id: "pinkheart",
       name: "Pink Hearts",
@@ -221,9 +234,16 @@
     Object.keys(d).forEach((k) => {
       if (!me.cosmetics[k] || !getItem(me.cosmetics[k])) me.cosmetics[k] = d[k];
     });
-    // Migrate removed / renamed frames
-    if (me.cosmetics.frame === "frame_pink_hearts") me.cosmetics.frame = "pinkheart";
-    if (me.cosmetics.frame && !getItem(me.cosmetics.frame)) me.cosmetics.frame = "frame_none";
+    // Only clear UNKNOWN frame ids. Never rename legacy IDs (e.g. frame_pink_hearts).
+    if (me.cosmetics.frame && !getItem(me.cosmetics.frame)) {
+      console.warn("[cosmetics] unknown frame id kept as-is until catalog loads:", me.cosmetics.frame);
+      // Do not force frame_none if catalog might still be loading; only reset truly obsolete ids
+      // that are not the legacy hearts ring.
+      const obsolete = String(me.cosmetics.frame);
+      if (obsolete !== "frame_pink_hearts" && obsolete !== "pinkheart") {
+        me.cosmetics.frame = "frame_none";
+      }
+    }
     me.ownedPacks = me.ownedPacks || ["pack_starter"];
     me.ownedCosmetics = me.ownedCosmetics || allItems().map((x) => x.id);
     me.bio = cleanBio(me.bio);

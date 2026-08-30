@@ -93,6 +93,27 @@
     return me;
   }
 
+
+  /** Render PFP + equipped ring via shared WSCosmetics path (never dump URL as text). */
+  function paintAvatar(el, me, sizeClass) {
+    if (!el) return;
+    const user = me || state.me;
+    if (window.WSCosmetics && WSCosmetics.renderAvatar) {
+      el.innerHTML = WSCosmetics.renderAvatar(user, sizeClass || "md");
+      el.classList.add("avatar-host");
+    } else {
+      const photo =
+        user.avatarUrl ||
+        (user.avatar && (String(user.avatar).startsWith("/") || String(user.avatar).startsWith("http"))
+          ? user.avatar
+          : null);
+      const letter = String(user.displayName || user.name || "?").charAt(0).toUpperCase();
+      el.innerHTML = photo
+        ? `<img class="avatar" src="${esc(photo)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />`
+        : `<span>${esc(user.avatar && String(user.avatar).length <= 3 ? user.avatar : letter)}</span>`;
+    }
+  }
+
   function saveMe() {
     state.me.id = state.me.id || uid();
     try {
@@ -147,8 +168,8 @@
   function enterApp() {
     $("#gate").classList.add("hidden");
     $("#shell").classList.remove("hidden");
-    $("#meName").textContent = state.me.name;
-    $("#meAvatar").textContent = state.me.avatar || "";
+    $("#meName").textContent = state.me.displayName || state.me.name || "Guest";
+    paintAvatar($("#meAvatar"), state.me, "sm");
     document.documentElement.style.setProperty("--purple", state.me.color || "#9D5CFF");
     connect();
     refreshHome();
@@ -238,8 +259,9 @@
 
   /* ---------- Home / rooms ---------- */
   async function refreshHome() {
-    $("#welcomeTitle").textContent = `Welcome back ${state.me.name}`;
-    $("#homeAvatar").textContent = state.me.avatar;
+    const nm = state.me.displayName || state.me.name || "Guest";
+    $("#welcomeTitle").textContent = `Welcome back ${nm}`;
+    paintAvatar($("#homeAvatar"), state.me, "md");
     $("#homeLevel").textContent = `Lv ${state.me.level || 1}`;
     $("#homeXp").textContent = `${state.me.xp || 0} XP`;
     const hist = state.me.history || [];
@@ -335,7 +357,7 @@
     } else if (fallback) {
       fallback.classList.remove("hidden");
       const av = $("#profAvatar");
-      if (av) av.textContent = state.me.avatar || "🎬";
+      if (av) paintAvatar(av, state.me, "lg");
       const pn = $("#profName");
       if (pn) pn.textContent = state.me.displayName || state.me.name;
       const pl = $("#profLevel");
@@ -371,7 +393,6 @@
       WSCosmetics.bindPicker(cosmoRoot, state.me, () => {
         saveMe();
         if (state.me._lastRomanceEquip && state.socket) {
-          // notify server matching fit achievement via profile save side channel
           fetch("/api/profile", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -380,6 +401,8 @@
         }
         renderProfile();
         $("#meName").textContent = state.me.displayName || state.me.name;
+        paintAvatar($("#meAvatar"), state.me, "sm");
+        paintAvatar($("#homeAvatar"), state.me, "md");
         if (state.socket) state.socket.emit("hello", state.me);
       });
     }
@@ -1133,9 +1156,9 @@
       refreshHome();
       renderProfile();
       const mn = $("#meName");
-      const ma = $("#meAvatar");
-      if (mn) mn.textContent = state.me.name;
-      if (ma) ma.textContent = state.me.avatar || "🎬";
+      if (mn) mn.textContent = state.me.displayName || state.me.name || "Guest";
+      paintAvatar($("#meAvatar"), state.me, "sm");
+      paintAvatar($("#homeAvatar"), state.me, "md");
     } catch (err) {
       console.error("ws-entered failed", err);
     }
@@ -1231,8 +1254,8 @@
     if (/^[A-Za-z0-9+/=]{12,}$/.test(String(state.me.bio || "").replace(/\s/g, ""))) state.me.bio = "";
     state.me.color = $("#setColor").value;
     saveMe();
-    $("#meName").textContent = state.me.name;
-    $("#meAvatar").textContent = state.me.avatar && String(state.me.avatar).length <= 3 ? state.me.avatar : "🎬";
+    $("#meName").textContent = state.me.displayName || state.me.name || "Guest";
+    paintAvatar($("#meAvatar"), state.me, "sm");
     toast("Profile saved!");
     renderProfile();
     if (state.socket && state.socket.connected) state.socket.emit("hello", state.me);

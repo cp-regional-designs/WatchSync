@@ -2806,3 +2806,82 @@ main, .pages, .page {
     --avatar-outer: 72px !important;
   }
 }
+
+/* Perfect Center-Aligned Avatar Ring & PFP Styling */
+.avatar-wrapper {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: var(--avatar-outer, 56px) !important;
+  height: var(--avatar-outer, 56px) !important;
+  flex-shrink: 0 !important;
+  overflow: visible !important;
+}
+
+.avatar-wrapper .avatar-core {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+  z-index: 1 !important;
+  background: var(--purple2, #6d28d9);
+}
+
+.avatar-wrapper .avatar-core img.avatar {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 50% !important;
+  display: block !important;
+}
+
+.avatar-wrapper .avatar-core .avatar-fallback {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  font-size: calc(var(--avatar-outer, 56px) * 0.45) !important;
+}
+
+/* Pink Hearts Ring Overlay — centered math-perfectly over the avatar circle */
+.avatar-wrapper .avatar-ring {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 146% !important;
+  height: 146% !important;
+  transform: translate(-50%, -50%) !important;
+  object-fit: contain !important;
+  pointer-events: none !important;
+  z-index: 3 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.avatar-wrapper .status-orb {
+  position: absolute !important;
+  bottom: 0 !important;
+  right: 0 !important;
+  width: calc(var(--avatar-outer, 56px) * 0.28) !important;
+  height: calc(var(--avatar-outer, 56px) * 0.28) !important;
+  border-radius: 50% !important;
+  border: 2px solid #0e0e15 !important;
+  z-index: 4 !important;
+}
+
+.pfp-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+

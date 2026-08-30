@@ -1215,7 +1215,16 @@
 
   $("#saveProfile").onclick = () => {
     state.me.name = $("#setName").value.trim().slice(0, 18) || state.me.name;
-    state.me.avatar = $("#setAvatar").value.slice(0, 4) || "🎬";
+    state.me.displayName = state.me.name;
+    const typedAvatar = $("#setAvatar").value.trim();
+    if (typedAvatar && !typedAvatar.startsWith("/") && !typedAvatar.startsWith("http")) {
+      delete state.me.avatarUrl;
+      state.me.avatar = typedAvatar.slice(0, 4);
+    } else if (state.me.avatarUrl) {
+      state.me.avatar = state.me.avatarUrl;
+    } else if (typedAvatar) {
+      state.me.avatar = typedAvatar;
+    }
     state.me.bio = (window.WSCosmetics && WSCosmetics.cleanBio
       ? WSCosmetics.cleanBio($("#setBio").value)
       : $("#setBio").value.slice(0, 160));
@@ -1223,10 +1232,48 @@
     state.me.color = $("#setColor").value;
     saveMe();
     $("#meName").textContent = state.me.name;
-    $("#meAvatar").textContent = state.me.avatar;
-    toast("Saved");
+    $("#meAvatar").textContent = state.me.avatar && String(state.me.avatar).length <= 3 ? state.me.avatar : "🎬";
+    toast("Profile saved!");
     renderProfile();
+    if (state.socket && state.socket.connected) state.socket.emit("hello", state.me);
   };
+
+  const pfpBtn = $("#pfpUploadBtn");
+  const pfpInput = $("#pfpFileInput");
+  if (pfpBtn && pfpInput) {
+    pfpBtn.onclick = () => pfpInput.click();
+    pfpInput.onchange = () => {
+      const file = pfpInput.files && pfpInput.files[0];
+      if (!file) return;
+      const status = $("#pfpStatus");
+      if (status) status.textContent = "Uploading…";
+      const formData = new FormData();
+      formData.append("avatar", file);
+      fetch("/api/upload/avatar", {
+        method: "POST",
+        body: formData,
+      })
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.ok && d.url) {
+            state.me.avatarUrl = d.url;
+            state.me.avatar = d.url;
+            saveMe();
+            renderProfile();
+            if (status) status.textContent = "Uploaded!";
+            toast("Profile picture updated!");
+            if (state.socket && state.socket.connected) state.socket.emit("hello", state.me);
+          } else {
+            if (status) status.textContent = "Failed";
+            toast(d.error || "Upload failed");
+          }
+        })
+        .catch((err) => {
+          if (status) status.textContent = "Error";
+          toast(err.message || "Upload error");
+        });
+    };
+  }
 
   $("#friendAdd").onclick = () => {
     fetch("/api/friends/request", {

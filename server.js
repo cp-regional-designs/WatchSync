@@ -57,6 +57,12 @@ function sanitizeName(name) {
   return n || "Guest";
 }
 
+function sanitizeAvatar(raw) {
+  const s = String(raw || "🎬").trim();
+  if (s.startsWith("/") || s.startsWith("http")) return s.slice(0, 512);
+  return s.slice(0, 4);
+}
+
 /** Unique handle — never shown as the main chat name, used for identity */
 const usernameById = new Map(); // id -> username
 const idByUsername = new Map(); // username -> id
@@ -134,6 +140,28 @@ const chatImageUpload = multer({
   },
 });
 
+const avatarImageUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, avatarDir),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname || "").toLowerCase() || ".png";
+      const safe = [".png", ".jpg", ".jpeg", ".gif", ".webp"].includes(ext) ? ext : ".png";
+      cb(null, `avatar-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${safe}`);
+    },
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const ok = /^image\/(png|jpe?g|gif|webp)$/i.test(file.mimetype || "");
+    cb(ok ? null : new Error("Images only (png/jpg/gif/webp)"), ok);
+  },
+});
+
+app.post("/api/upload/avatar", avatarImageUpload.single("avatar"), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "No image uploaded" });
+  const url = `/uploads/avatars/${req.file.filename}`;
+  res.json({ ok: true, url });
+});
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(express.static(path.join(__dirname, "client")));
 
@@ -166,7 +194,7 @@ app.post("/api/profile", (req, res) => {
     name: clean,
     displayName: sanitizeName(displayName || clean),
     color: color || "#9D5CFF",
-    avatar: String(avatar || "🎬").slice(0, 4),
+    avatar: sanitizeAvatar(avatar),
     bio: String(bio || "").slice(0, 160),
     settings: settings || undefined,
     ownedPacks: req.body?.ownedPacks,
@@ -288,7 +316,7 @@ app.post("/api/rooms/join", (req, res) => {
       name: displayName,
       displayName,
       color: body.color || "#9D5CFF",
-      avatar: String(body.avatar || "🎬").slice(0, 4),
+      avatar: sanitizeAvatar(body.avatar),
       cosmetics: body.cosmetics || null,
     };
     store.upsertProfile(id, user);
@@ -329,7 +357,7 @@ io.on("connection", (socket) => {
       name: displayName, // legacy field = display name for chat labels
       displayName,
       color: user?.color || "#9D5CFF",
-      avatar: String(user?.avatar || "🎬").slice(0, 4),
+      avatar: sanitizeAvatar(user?.avatar),
       cosmetics: user?.cosmetics || null,
     };
     store.upsertProfile(id, socket.data.user);

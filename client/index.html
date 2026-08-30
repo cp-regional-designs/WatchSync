@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@500;700&family=Dancing+Script:wght@500;600&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;600&family=Nunito:wght@600;700;800&family=Outfit:wght@400;500;600;700;800&family=Pacifico&family=Plus+Jakarta+Sans:wght@500;600;700&family=Poppins:wght@400;600;700;800&family=Press+Start+2P&family=Quicksand:wght@500;600;700&family=Rubik:wght@500;600;700&family=Space+Grotesk:wght@500;600;700&family=VT323&display=swap" rel="stylesheet">
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="stylesheet" href="/style.css?v=v3" />
+  <link rel="stylesheet" href="/style.css?v=v4" />
 </head>
 <body>
   <div id="app">
@@ -141,7 +141,14 @@
           <div class="glass form">
             <label>Display name <input id="setName" maxlength="18" /></label>
             <p class="muted" style="font-size:12px;margin:-4px 0 8px">Your unique handle: <strong id="setUsername">@user</strong> (not changeable)</p>
-            <label>Avatar emoji <input id="setAvatar" maxlength="4" /></label>
+            <label>Avatar emoji <input id="setAvatar" maxlength="4" placeholder="🎬" /></label>
+            <label>Custom Profile Picture (Upload Image)
+              <div class="pfp-upload-row">
+                <input type="file" id="pfpFileInput" accept="image/png,image/jpeg,image/gif,image/webp" style="display:none" />
+                <button type="button" id="pfpUploadBtn" class="btn-ghost sm"><i data-lucide="upload"></i> Upload Photo</button>
+                <span id="pfpStatus" class="muted" style="font-size:12px"></span>
+              </div>
+            </label>
             <label>Bio <input id="setBio" maxlength="160" /></label>
             <label>Accent
               <select id="setColor">
@@ -368,17 +375,17 @@
     }
   });
   </script>
-  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js?v=v3"></script>
-  <script src="/socket.io/socket.io.js?v=v3"></script>
-  <script src="/config.js?v=v3"></script>
-  <script src="/providers/vidking.js?v=v3"></script>
-  <script src="/providers/youtube.js?v=v3"></script>
-  <script src="/providers/html5.js?v=v3"></script>
-  <script src="/components/player.js?v=v3"></script>
-  <script src="/components/movies.js?v=v3"></script>
-  <script src="/components/cosmetics.js?v=v3"></script>
-  <script src="/components/voice.js?v=v3"></script>
-  <script src="/app.js?v=v3"></script>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js?v=v4"></script>
+  <script src="/socket.io/socket.io.js?v=v4"></script>
+  <script src="/config.js?v=v4"></script>
+  <script src="/providers/vidking.js?v=v4"></script>
+  <script src="/providers/youtube.js?v=v4"></script>
+  <script src="/providers/html5.js?v=v4"></script>
+  <script src="/components/player.js?v=v4"></script>
+  <script src="/components/movies.js?v=v4"></script>
+  <script src="/components/cosmetics.js?v=v4"></script>
+  <script src="/components/voice.js?v=v4"></script>
+  <script src="/app.js?v=v4"></script>
 </body>
 </html>
 

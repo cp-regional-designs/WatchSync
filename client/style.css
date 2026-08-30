@@ -2807,7 +2807,7 @@ main, .pages, .page {
   }
 }
 
-/* Perfect Center-Aligned Avatar Ring & PFP Styling (Measured via Python script) */
+/* Perfect Center-Aligned Avatar Ring & PFP Styling (Measured via Python floodfill) */
 .avatar-wrapper {
   position: relative !important;
   display: inline-flex !important;
@@ -2820,6 +2820,10 @@ main, .pages, .page {
 }
 
 .avatar-wrapper .avatar-core {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
   width: 100% !important;
   height: 100% !important;
   border-radius: 50% !important;
@@ -2827,7 +2831,6 @@ main, .pages, .page {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  position: relative !important;
   z-index: 1 !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -2835,10 +2838,10 @@ main, .pages, .page {
   transition: all 0.2s ease !important;
 }
 
-/* Python measurement: inner hole is exactly 64.68% of the recentered ring canvas */
+/* Python floodfill measurement: inner hole is exactly 64.434% of centered canvas */
 .avatar-wrapper.has-ring .avatar-core {
-  width: 64.68% !important;
-  height: 64.68% !important;
+  width: 64.43% !important;
+  height: 64.43% !important;
   background: transparent !important;
   box-shadow: none !important;
   border: none !important;
@@ -2865,7 +2868,7 @@ main, .pages, .page {
   font-size: calc(var(--avatar-outer, 56px) * 0.32) !important;
 }
 
-/* Ring Overlay — sits 100% over the wrapper container, perfectly centered */
+/* Ring Overlay — 100% centered overlay sharing (50%, 50%) center point */
 .avatar-wrapper .avatar-ring {
   position: absolute !important;
   top: 50% !important;
@@ -2888,7 +2891,12 @@ main, .pages, .page {
   height: calc(var(--avatar-outer, 56px) * 0.24) !important;
   border-radius: 50% !important;
   border: 2px solid #0e0e15 !important;
-  z-index: 4 !important;
+  z-index: 5 !important;
+}
+
+.avatar-wrapper.has-ring .status-orb {
+  bottom: -4px !important;
+  right: -4px !important;
 }
 
 .pfp-upload-row {

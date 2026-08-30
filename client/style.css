@@ -2807,7 +2807,7 @@ main, .pages, .page {
   }
 }
 
-/* Perfect Center-Aligned Avatar Ring & PFP Styling */
+/* Perfect Center-Aligned Avatar Ring & PFP Styling (Measured via Python script) */
 .avatar-wrapper {
   position: relative !important;
   display: inline-flex !important;
@@ -2835,10 +2835,10 @@ main, .pages, .page {
   transition: all 0.2s ease !important;
 }
 
-/* When a ring is equipped: avatar core scales to 74% to fit inside the ring hole seamlessly */
+/* Python measurement: inner hole is exactly 64.68% of the recentered ring canvas */
 .avatar-wrapper.has-ring .avatar-core {
-  width: 74% !important;
-  height: 74% !important;
+  width: 64.68% !important;
+  height: 64.68% !important;
   background: transparent !important;
   box-shadow: none !important;
   border: none !important;
@@ -2862,16 +2862,16 @@ main, .pages, .page {
   font-weight: 800 !important;
   color: #ffffff !important;
   background: var(--purple2, #6d28d9) !important;
-  font-size: calc(var(--avatar-outer, 56px) * 0.35) !important;
+  font-size: calc(var(--avatar-outer, 56px) * 0.32) !important;
 }
 
-/* Ring Overlay — sits centered at 108% over wrapper */
+/* Ring Overlay — sits 100% over the wrapper container, perfectly centered */
 .avatar-wrapper .avatar-ring {
   position: absolute !important;
   top: 50% !important;
   left: 50% !important;
-  width: 108% !important;
-  height: 108% !important;
+  width: 100% !important;
+  height: 100% !important;
   transform: translate(-50%, -50%) !important;
   object-fit: contain !important;
   pointer-events: none !important;
@@ -2882,10 +2882,10 @@ main, .pages, .page {
 
 .avatar-wrapper .status-orb {
   position: absolute !important;
-  bottom: -2px !important;
-  right: -2px !important;
-  width: calc(var(--avatar-outer, 56px) * 0.26) !important;
-  height: calc(var(--avatar-outer, 56px) * 0.26) !important;
+  bottom: 0px !important;
+  right: 0px !important;
+  width: calc(var(--avatar-outer, 56px) * 0.24) !important;
+  height: calc(var(--avatar-outer, 56px) * 0.24) !important;
   border-radius: 50% !important;
   border: 2px solid #0e0e15 !important;
   z-index: 4 !important;

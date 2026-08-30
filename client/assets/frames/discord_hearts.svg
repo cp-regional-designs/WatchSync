@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <defs>
+    <filter id="s3" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <circle cx="128" cy="140" r="68" fill="none" stroke="#2a2a35" stroke-width="10"/>
+  <circle cx="128" cy="140" r="64" fill="none" stroke="#FF6BA8" stroke-width="3" opacity="0.5"/>
+  <!-- floating hearts around frame -->
+  <path d="M60 70 C60 70 48 58 60 50 C72 58 60 70 60 70Z" fill="#FF4D8D" filter="url(#s3)"/>
+  <path d="M200 75 C200 75 190 64 200 56 C210 64 200 75 200 75Z" fill="#FF8FAB" filter="url(#s3)"/>
+  <path d="M45 140 C45 140 33 128 45 120 C57 128 45 140 45 140Z" fill="#F472B6" filter="url(#s3)"/>
+  <path d="M215 145 C215 145 203 133 215 125 C227 133 215 145 215 145Z" fill="#FB7185" filter="url(#s3)"/>
+  <path d="M75 200 C75 200 63 188 75 180 C87 188 75 200 75 200Z" fill="#FF6BA8" filter="url(#s3)"/>
+  <path d="M185 205 C185 205 173 193 185 185 C197 193 185 205 185 205Z" fill="#FF4D8D" filter="url(#s3)"/>
+  <path d="M128 42 C128 42 114 28 128 18 C142 28 128 42 128 42Z" fill="#FF4D8D" filter="url(#s3)"/>
+  <circle cx="95" cy="55" r="2.5" fill="#FFE566"/>
+  <circle cx="170" cy="50" r="2" fill="#FFE566"/>
+</svg>

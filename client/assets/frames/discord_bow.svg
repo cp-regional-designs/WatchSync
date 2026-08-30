@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <defs>
+    <linearGradient id="bow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FF6BA8"/>
+      <stop offset="100%" stop-color="#E91E8C"/>
+    </linearGradient>
+    <filter id="s2" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+  <circle cx="128" cy="150" r="68" fill="none" stroke="#2a2a35" stroke-width="10"/>
+  <circle cx="128" cy="150" r="64" fill="none" stroke="#FF6BA8" stroke-width="3" opacity="0.55"/>
+  <!-- bow on top -->
+  <ellipse cx="95" cy="48" rx="32" ry="22" fill="url(#bow)" filter="url(#s2)" transform="rotate(-25 95 48)"/>
+  <ellipse cx="161" cy="48" rx="32" ry="22" fill="url(#bow)" filter="url(#s2)" transform="rotate(25 161 48)"/>
+  <circle cx="128" cy="52" r="14" fill="#FF4D94" filter="url(#s2)"/>
+  <circle cx="128" cy="50" r="6" fill="#FFB6D0" opacity="0.8"/>
+  <!-- ribbon tails -->
+  <path d="M118 62 L108 95 L122 88 Z" fill="#E91E8C"/>
+  <path d="M138 62 L148 95 L134 88 Z" fill="#E91E8C"/>
+  <!-- sparkles -->
+  <circle cx="70" cy="70" r="3" fill="#FFE566"/>
+  <circle cx="190" cy="65" r="2.5" fill="#FFE566"/>
+</svg>

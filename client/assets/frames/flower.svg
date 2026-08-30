@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+
+  <defs>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2a2a35"/>
+      <stop offset="50%" stop-color="#1a1a22"/>
+      <stop offset="100%" stop-color="#0e0e14"/>
+    </linearGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.35"/>
+    </filter>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="1.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- avatar hole (transparent center) -->
+  <circle cx="128" cy="140" r="72" fill="none" stroke="url(#rim)" stroke-width="10"/>
+  <circle cx="128" cy="140" r="72" fill="none" stroke="#3d3d4a" stroke-width="2" opacity="0.8"/>
+
+  <g filter="url(#soft)">
+    <ellipse cx="78" cy="70" rx="16" ry="22" fill="#FF6B9D" transform="rotate(-35 78 70)"/>
+    <ellipse cx="100" cy="52" rx="16" ry="22" fill="#FF8FAB" transform="rotate(-15 100 52)"/>
+    <ellipse cx="128" cy="44" rx="16" ry="22" fill="#FF6B9D"/>
+    <ellipse cx="156" cy="52" rx="16" ry="22" fill="#FFB347" transform="rotate(15 156 52)"/>
+    <ellipse cx="178" cy="70" rx="16" ry="22" fill="#FF8FAB" transform="rotate(35 178 70)"/>
+  </g>
+  <circle cx="128" cy="58" r="10" fill="#FFE566"/>
+  <circle cx="128" cy="58" r="5" fill="#FFC107"/>
+  <circle cx="128" cy="140" r="72" fill="none" stroke="#2a2a32" stroke-width="8"/>
+</svg>

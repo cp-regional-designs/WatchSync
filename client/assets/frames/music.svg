@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+
+  <defs>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2a2a35"/>
+      <stop offset="50%" stop-color="#1a1a22"/>
+      <stop offset="100%" stop-color="#0e0e14"/>
+    </linearGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.35"/>
+    </filter>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="1.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- avatar hole (transparent center) -->
+  <circle cx="128" cy="140" r="72" fill="none" stroke="url(#rim)" stroke-width="10"/>
+  <circle cx="128" cy="140" r="72" fill="none" stroke="#3d3d4a" stroke-width="2" opacity="0.8"/>
+
+  <path d="M155 45 L155 145" stroke="#6D28D9" stroke-width="6" stroke-linecap="round" filter="url(#soft)"/>
+  <ellipse cx="135" cy="150" rx="22" ry="16" fill="#7C3AED" transform="rotate(-25 135 150)"/>
+  <path d="M155 45 L195 35 L195 70 L155 80 Z" fill="#A78BFA"/>
+  <path d="M65 85 L65 160" stroke="#DB2777" stroke-width="5" stroke-linecap="round"/>
+  <ellipse cx="48" cy="165" rx="18" ry="14" fill="#EC4899" transform="rotate(-25 48 165)"/>
+  <circle cx="128" cy="145" r="65" fill="none" stroke="#7C3AED" stroke-width="6"/>
+  <circle cx="128" cy="145" r="61" fill="none" stroke="#C4B5FD" stroke-width="2" opacity="0.5"/>
+</svg>

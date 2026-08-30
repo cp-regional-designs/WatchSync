@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>WatchSync</title>
+  <meta name="ws-version" content="1.0.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@500;700&family=Dancing+Script:wght@500;600&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;600&family=Nunito:wght@600;700;800&family=Outfit:wght@400;500;600;700;800&family=Pacifico&family=Plus+Jakarta+Sans:wght@500;600;700&family=Poppins:wght@400;600;700;800&family=Press+Start+2P&family=Quicksand:wght@500;600;700&family=Rubik:wght@500;600;700&family=Space+Grotesk:wght@500;600;700&family=VT323&display=swap" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="/style.css?v=v3" />
+</head>
+<body>
+  <div id="app">
+    <!-- Name gate -->
+    <section id="gate" class="gate">
+      <div class="gate-card">
+        <div class="logo-mark"><i data-lucide="play"></i></div>
+        <h1>WatchSync</h1>
+        <p>Private watch parties for friends</p>
+        <label>Display name</label>
+        <input id="gateName" maxlength="18" placeholder="What friends see (can match others)" autocomplete="nickname" />
+        <p class="muted" style="font-size:12px;margin-top:8px;text-align:left">You also get a unique @username automatically so rooms never break if two people share a name.</p>
+        <button id="gateGo" class="btn-primary" type="button" onclick="window.__wsEnter && window.__wsEnter(event)">Enter</button>
+      </div>
+    </section>
+
+    <!-- Shell -->
+    <div id="shell" class="shell hidden">
+      <header class="topbar">
+        <div class="brand">
+          <span class="logo-mark sm"><i data-lucide="play"></i></span>
+          <strong>WatchSync</strong>
+        </div>
+        <button id="meBtn" class="me-chip" type="button">
+          <span id="meAvatar"><i data-lucide="film"></i></span>
+          <span id="meName">Guest</span>
+        </button>
+      </header>
+
+      <main id="pages" class="pages">
+        <!-- HOME -->
+        <section class="page active" data-page="home">
+          <div class="welcome glass">
+            <div class="welcome-row">
+              <div id="homeAvatar" class="avatar-lg"><i data-lucide="film"></i></div>
+              <div>
+                <h2 id="welcomeTitle">Welcome back</h2>
+                <p class="muted">Ready for movie night?</p>
+                <div class="level-row"><span id="homeLevel">Lv 1</span> · <span id="homeXp">0 XP</span></div>
+              </div>
+            </div>
+            <div class="quick-grid">
+              <button class="btn-primary" data-go="create"><i data-lucide="sparkles"></i> Create Room</button>
+              <button class="btn-ghost" data-go="couples"><i data-lucide="heart"></i> Couples Room</button>
+              <button class="btn-ghost" data-go="join"><i data-lucide="key-round"></i> Join Room</button>
+              <button class="btn-ghost" data-nav="discover"><i data-lucide="radio"></i> Browse Rooms</button>
+              <button class="btn-ghost" data-nav="library"><i data-lucide="clapperboard"></i> Movie Library</button>
+            </div>
+          </div>
+          <h3 class="section-h">Continue watching</h3>
+          <div id="continueRow" class="h-scroll"></div>
+          <h3 class="section-h">Activity</h3>
+          <div id="activityList" class="glass list"></div>
+          <h3 class="section-h">Trending public rooms</h3>
+          <div id="homeRooms" class="room-list"></div>
+        </section>
+
+        <!-- DISCOVER -->
+        <section class="page" data-page="discover">
+          <h2>Discover</h2>
+          <div class="search-row">
+            <input id="roomSearch" placeholder="Search rooms..." />
+            <select id="roomSort">
+              <option value="viewers">Most viewers</option>
+              <option value="newest">Newest</option>
+              <option value="trending">Trending</option>
+            </select>
+          </div>
+          <div id="discoverRooms" class="room-list"></div>
+        </section>
+
+        <!-- LIBRARY -->
+        <section class="page" data-page="library">
+          <div class="lib-head">
+            <h2>Movie Library</h2>
+            <div class="type-toggle">
+              <button class="typeBtn active" data-type="movie">Movies</button>
+              <button class="typeBtn" data-type="tv">TV</button>
+            </div>
+          </div>
+          <div class="search-row">
+            <input id="libSearch" placeholder="Search movies or TV..." />
+            <button id="libSearchBtn" class="btn-primary sm">Search</button>
+          </div>
+          <div class="chips" id="libCats">
+            <button class="chip active" data-cat="trending">Trending</button>
+            <button class="chip" data-cat="popular">Popular</button>
+            <button class="chip" data-cat="new">New</button>
+            <button class="chip" data-cat="top">Top Rated</button>
+          </div>
+          <div id="libGrid" class="movie-grid"></div>
+          <div id="libMore" class="load-more hidden">Loading more…</div>
+        </section>
+
+        <!-- FRIENDS -->
+        <section class="page" data-page="friends">
+          <h2>Friends</h2>
+          <div class="search-row">
+            <input id="friendName" placeholder="Add by username" />
+            <button id="friendAdd" class="btn-primary sm">Add</button>
+          </div>
+          <h3 class="section-h">Requests</h3>
+          <div id="friendIncoming" class="list glass"></div>
+          <h3 class="section-h">Your friends</h3>
+          <div id="friendList" class="list glass"></div>
+        </section>
+
+        <!-- PROFILE -->
+        <section class="page" data-page="profile">
+          <div id="profCosmoHero" class="profile-hero glass cosmo-hero"></div>
+          <div class="profile-hero-fallback glass" id="profHeroFallback">
+            <div id="profAvatar" class="avatar-xl"><i data-lucide="film"></i></div>
+            <h2 id="profName">Guest</h2>
+            <p id="profLevel" class="muted">Lv 1 · Viewer</p>
+            <p id="profBio" class="bio"></p>
+          </div>
+          <div class="stats">
+            <div><b id="statMovies">0</b><span>Movies</span></div>
+            <div><b id="statRooms">0</b><span>Rooms</span></div>
+            <div><b id="statXp">0</b><span>XP</span></div>
+          </div>
+          <h3 class="section-h">Cosmetics</h3>
+          <p class="muted cosmo-intro">Equip rings, fonts, banners, and effects for your profile.</p>
+          <div id="cosmoRoot" class="cosmo-root glass"></div>
+          <h3 class="section-h">Achievements</h3>
+          <div id="achGrid" class="ach-grid"></div>
+          <h3 class="section-h">Settings</h3>
+          <div class="glass form">
+            <label>Display name <input id="setName" maxlength="18" /></label>
+            <p class="muted" style="font-size:12px;margin:-4px 0 8px">Your unique handle: <strong id="setUsername">@user</strong> (not changeable)</p>
+            <label>Avatar emoji <input id="setAvatar" maxlength="4" /></label>
+            <label>Bio <input id="setBio" maxlength="160" /></label>
+            <label>Accent
+              <select id="setColor">
+                <option value="#9D5CFF">Purple</option>
+                <option value="#ff6fae">Pink</option>
+                <option value="#63b3ff">Blue</option>
+                <option value="#ff5c7a">Red</option>
+              </select>
+            </label>
+            <button id="saveProfile" class="btn-primary">Save</button>
+          </div>
+        </section>
+      </main>
+
+      <nav class="tabbar" id="tabbar">
+        <button data-nav="home" class="active"><i data-lucide="home"></i><span>Home</span></button>
+        <button data-nav="discover"><i data-lucide="radio"></i><span>Rooms</span></button>
+        <button data-nav="library"><i data-lucide="clapperboard"></i><span>Library</span></button>
+        <button data-nav="friends"><i data-lucide="users"></i><span>Friends</span></button>
+        <button data-nav="profile"><i data-lucide="user-round"></i><span>Me</span></button>
+      </nav>
+    </div>
+
+    <!-- ROOM v1.0.0 — polished watch party layout (keeps all control IDs) -->
+    <section id="room" class="room hidden">
+      <header class="room-bar">
+        <div class="room-id">
+          <span id="roomIcon" class="room-icon"><i data-lucide="popcorn"></i></span>
+          <div class="room-id-text">
+            <strong id="roomName">Room</strong>
+            <div class="room-meta">
+              <button type="button" id="copyCodeBtn" class="code-chip" title="Copy room code">
+                <span id="roomCode" class="code">------</span>
+                <i data-lucide="copy" class="code-copy-ico"></i>
+              </button>
+              <span id="roleBadge" class="badge">VIEWER</span>
+              <span class="member-chip" title="Members online">
+                <i data-lucide="users"></i>
+                <span id="headerUserCount">0</span>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="room-actions">
+          <div id="syncStatus" class="sync-status" title="Playback sync">
+            <span id="syncDot" class="sync-dot green"></span>
+            <span id="syncLabel" class="sync-label">Synced</span>
+          </div>
+          <button id="hostBtn" class="btn-ghost sm host-only hidden" title="Host panel">
+            <i data-lucide="crown"></i> Host
+          </button>
+          <button id="leaveBtn" class="btn-ghost sm leave-btn" title="Leave room">
+            <i data-lucide="log-out"></i> Leave
+          </button>
+        </div>
+      </header>
+
+      <div class="room-body">
+        <div class="player-wrap">
+          <div class="player-overlay" id="playerRoot">
+            <div class="player-poster" data-poster></div>
+            <div class="player-loading" data-loading hidden>
+              <div class="zenix-spin"></div>
+              <p>Loading…</p>
+            </div>
+            <div class="player-stage" data-stage></div>
+            <!-- Invisible click shield: blocks taps for viewers (Vidking ads) -->
+            <div class="player-lock" data-lock hidden aria-hidden="true"></div>
+            <div class="player-chrome">
+              <div class="player-title" data-title>Pick a movie from the library</div>
+            </div>
+            <div id="floatReacts" class="float-reacts"></div>
+          </div>
+
+          <div class="player-toolbar">
+            <button type="button" id="unlockPlayerBtn" class="unlock-chip host-only hidden" title="Unlock player clicks for 15s">
+              <i data-lucide="unlock"></i> Unlock 15s
+            </button>
+            <div class="transport host-only hidden" aria-label="Host playback controls">
+              <button type="button" id="skipBack" title="Back 5s"><i data-lucide="rewind"></i><span>5s</span></button>
+              <button type="button" id="playBtn" class="transport-primary" title="Play"><i data-lucide="play"></i></button>
+              <button type="button" id="pauseBtn" class="transport-primary" title="Pause"><i data-lucide="pause"></i></button>
+              <button type="button" id="skipFwd" title="Forward 5s"><span>5s</span><i data-lucide="fast-forward"></i></button>
+              <button type="button" id="skipIntro" class="skip-intro">Skip intro</button>
+              <span id="timeLabel" class="time-label">0:00</span>
+            </div>
+            <div class="react-bar" aria-label="Reactions">
+              <button type="button" data-react="❤️">❤️</button>
+              <button type="button" data-react="😂">😂</button>
+              <button type="button" data-react="🔥">🔥</button>
+              <button type="button" data-react="🍿">🍿</button>
+              <button type="button" data-react="👍">👍</button>
+              <button type="button" data-react="😭">😭</button>
+              <span class="react-date-only" title="Date-night reactions">
+                <button type="button" data-react="💕">💕</button>
+                <button type="button" data-react="💖">💖</button>
+                <button type="button" data-react="😍">😍</button>
+                <button type="button" data-react="🥰">🥰</button>
+                <button type="button" data-react="😘">😘</button>
+                <button type="button" data-react="💌">💌</button>
+                <button type="button" data-react="ILOVEYOU" class="love-chip" title="I love you">ILY</button>
+                <button type="button" data-react="🌹">🌹</button>
+              </span>
+            </div>
+          </div>
+
+          <!-- Host media bar — library / URL / upload -->
+          <div class="host-tools media-bar host-only hidden" aria-label="Load media">
+            <button type="button" class="btn-ghost sm media-lib" data-open-lib>
+              <i data-lucide="clapperboard"></i> Library
+            </button>
+            <div class="url-row">
+              <input id="urlInput" placeholder="YouTube or MP4 URL" autocomplete="off" />
+              <button type="button" id="loadUrl" class="btn-primary sm">Load</button>
+            </div>
+            <label class="file-btn sm media-upload">
+              <i data-lucide="upload"></i> Upload
+              <input id="fileInput" type="file" accept="video/mp4,video/webm" hidden />
+            </label>
+            <div id="uploadProg" class="upload-prog hidden"></div>
+          </div>
+          <p class="guest-hint host-guest-msg">Only the host can change the movie and control playback.</p>
+        </div>
+
+        <aside class="side" id="roomSide">
+          <div class="side-tabs" role="tablist">
+            <button type="button" class="side-tab active" data-side-tab="chat" role="tab" aria-selected="true">
+              <i data-lucide="message-circle"></i> Chat
+            </button>
+            <button type="button" class="side-tab" data-side-tab="voice" role="tab" aria-selected="false">
+              <i data-lucide="mic"></i> Voice
+            </button>
+            <button type="button" class="side-tab" data-side-tab="people" role="tab" aria-selected="false">
+              <i data-lucide="users"></i> People
+            </button>
+          </div>
+
+          <div class="side-panels">
+            <div class="chat glass side-panel active" data-side-panel="chat" role="tabpanel">
+              <div id="chatLog" class="chat-log"></div>
+              <div id="typing" class="typing hidden"></div>
+              <form id="chatForm" class="chat-form">
+                <label class="chat-img-btn" title="Upload screenshot">
+                  <i data-lucide="image-plus"></i>
+                  <input id="chatImageInput" type="file" accept="image/png,image/jpeg,image/gif,image/webp,image/*" hidden />
+                </label>
+                <input id="chatInput" maxlength="400" placeholder="Message…" autocomplete="off" />
+                <button type="submit" aria-label="Send"><i data-lucide="send"></i></button>
+              </form>
+            </div>
+
+            <div class="voice glass side-panel" id="voicePanel" data-side-panel="voice" role="tabpanel" hidden>
+              <div class="voice-body">
+                <p class="voice-status-line">Status: <span id="voiceStatus" class="muted">Off</span></p>
+                <div class="voice-controls">
+                  <button type="button" id="voiceJoin" class="btn-primary sm">Join voice</button>
+                  <button type="button" id="voiceMute" class="btn-ghost sm hidden">Mute</button>
+                  <button type="button" id="voiceLeave" class="btn-ghost sm hidden">Leave</button>
+                </div>
+                <div id="voicePeers" class="voice-peers"></div>
+                <p class="muted voice-hint">Uses your mic over a peer connection. Works best on HTTPS.</p>
+              </div>
+            </div>
+
+            <div class="users glass side-panel" data-side-panel="people" role="tabpanel" hidden>
+              <div class="users-head">
+                <span>Online</span>
+                <span id="userCount" class="users-count">0</span>
+              </div>
+              <div id="userList"></div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modals -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-card" id="modalCard"></div>
+  </div>
+  <div id="toast" class="toast hidden"></div>
+
+    <script>
+    window.__wsEnter = function(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      var input = document.getElementById("gateName");
+      var name = ((input && input.value) || "").trim();
+    if (name.length < 2) {
+      alert("Enter a display name (at least 2 characters)");
+      if (input) input.focus();
+      return false;
+    }
+    var profile = {};
+    try { profile = JSON.parse(localStorage.getItem("ws_profile_v3") || "{}") || {}; } catch (_) {}
+    profile.id = profile.id || ("u_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36));
+    profile.name = name.slice(0, 18);
+    profile.avatar = profile.avatar || "🎬";
+    profile.color = profile.color || "#9D5CFF";
+    profile.joinedAt = profile.joinedAt || Date.now();
+    try { localStorage.setItem("ws_profile_v3", JSON.stringify(profile)); } catch (_) {}
+    var gate = document.getElementById("gate");
+    var shell = document.getElementById("shell");
+    if (gate) gate.classList.add("hidden");
+    if (shell) shell.classList.remove("hidden");
+    var meName = document.getElementById("meName");
+    var meAvatar = document.getElementById("meAvatar");
+    if (meName) meName.textContent = profile.name;
+    if (meAvatar) meAvatar.textContent = profile.avatar;
+    window.__wsProfile = profile;
+    window.dispatchEvent(new CustomEvent("ws-entered", { detail: profile }));
+    return false;
+  };
+  document.addEventListener("DOMContentLoaded", function () {
+    var input = document.getElementById("gateName");
+    if (input) {
+      input.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter") window.__wsEnter(ev);
+      });
+      try {
+        var saved = JSON.parse(localStorage.getItem("ws_profile_v3") || "{}");
+        if (saved && saved.name) input.value = saved.name;
+      } catch (_) {}
+    }
+  });
+  </script>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js?v=v3"></script>
+  <script src="/socket.io/socket.io.js?v=v3"></script>
+  <script src="/config.js?v=v3"></script>
+  <script src="/providers/vidking.js?v=v3"></script>
+  <script src="/providers/youtube.js?v=v3"></script>
+  <script src="/providers/html5.js?v=v3"></script>
+  <script src="/components/player.js?v=v3"></script>
+  <script src="/components/movies.js?v=v3"></script>
+  <script src="/components/cosmetics.js?v=v3"></script>
+  <script src="/components/voice.js?v=v3"></script>
+  <script src="/app.js?v=v3"></script>
+</body>
+</html>
+

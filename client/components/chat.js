@@ -1,0 +1,1 @@
+/* Chat helpers live in app.js. This file is reserved for a future split. */

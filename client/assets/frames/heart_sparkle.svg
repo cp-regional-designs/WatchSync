@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <path d="M128 215 C128 215 38 160 38 105 C38 75 60 55 88 55 C108 55 122 68 128 82 C134 68 148 55 168 55 C196 55 218 75 218 105 C218 160 128 215 128 215 Z" fill="none" stroke="#E11D48" stroke-width="8" stroke-linejoin="round" filter="url(#soft)"/>
+  <path d="M128 200 C128 200 52 152 52 108 C52 86 68 70 88 70 C106 70 118 84 128 98 C138 84 150 70 168 70 C188 70 204 86 204 108 C204 152 128 200 128 200 Z" fill="none" stroke="#FB7185" stroke-width="3"/>
+  <path d="M42 48 L48 62 L64 62 L51 71 L56 85 L42 76 L28 85 L33 71 L20 62 L36 62 Z" fill="#FDE047" stroke="#CA8A04" stroke-width="1"/>
+  <path d="M210 45 L215 56 L227 56 L217 63 L221 74 L210 67 L199 74 L203 63 L193 56 L205 56 Z" fill="#F9A8D4" stroke="#DB2777" stroke-width="1"/>
+  <path d="M205 195 L209 204 L219 204 L211 210 L214 219 L205 213 L196 219 L199 210 L191 204 L201 204 Z" fill="#A5B4FC" stroke="#4F46E5" stroke-width="1"/>
+  <path d="M48 190 L52 199 L62 199 L54 205 L57 214 L48 208 L39 214 L42 205 L34 199 L44 199 Z" fill="#FDE047" stroke="#CA8A04" stroke-width="1"/>
+  <defs>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+</svg>

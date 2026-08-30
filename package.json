@@ -1,0 +1,19 @@
+{
+  "name": "watchsync",
+  "version": "1.0.0",
+  "description": "WatchSync V1.0.0 \u2014 private social watch-party",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
+    "socket.io": "^4.8.1"
+  }
+}

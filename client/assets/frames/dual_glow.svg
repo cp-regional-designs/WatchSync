@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <circle cx="128" cy="128" r="78" fill="none" stroke="#9D5CFF" stroke-width="3" opacity="0.35"/>
+  <circle cx="128" cy="128" r="72" fill="none" stroke="#9D5CFF" stroke-width="5"/>
+  <circle cx="128" cy="128" r="66" fill="none" stroke="#C084FC" stroke-width="3"/>
+  <circle cx="128" cy="128" r="60" fill="none" stroke="#E9D5FF" stroke-width="1.5" opacity="0.6"/>
+  <circle cx="128" cy="48" r="5" fill="#FDE047" filter="url(#glow)"/>
+  <circle cx="48" cy="128" r="4" fill="#F9A8D4"/>
+  <circle cx="208" cy="128" r="4" fill="#67E8F9"/>
+  <circle cx="128" cy="208" r="5" fill="#86EFAC"/>
+  <defs>
+    <filter id="glow"><feGaussianBlur stdDeviation="2"/></filter>
+  </defs>
+</svg>

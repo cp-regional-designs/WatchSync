@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+
+  <defs>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2a2a35"/>
+      <stop offset="50%" stop-color="#1a1a22"/>
+      <stop offset="100%" stop-color="#0e0e14"/>
+    </linearGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.35"/>
+    </filter>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="1.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- avatar hole (transparent center) -->
+  <circle cx="128" cy="140" r="72" fill="none" stroke="url(#rim)" stroke-width="10"/>
+  <circle cx="128" cy="140" r="72" fill="none" stroke="#3d3d4a" stroke-width="2" opacity="0.8"/>
+
+  <circle cx="82" cy="72" r="28" fill="#2D5A27" filter="url(#soft)"/>
+  <circle cx="174" cy="72" r="28" fill="#2D5A27" filter="url(#soft)"/>
+  <circle cx="82" cy="72" r="28" fill="#5CB85C"/>
+  <circle cx="174" cy="72" r="28" fill="#5CB85C"/>
+  <circle cx="82" cy="72" r="14" fill="#0F1F0C"/>
+  <circle cx="174" cy="72" r="14" fill="#0F1F0C"/>
+  <circle cx="88" cy="66" r="6" fill="#fff" opacity="0.9"/>
+  <circle cx="180" cy="66" r="6" fill="#fff" opacity="0.9"/>
+  <circle cx="128" cy="140" r="72" fill="none" stroke="#3D7A3D" stroke-width="8"/>
+  <circle cx="128" cy="140" r="68" fill="none" stroke="#7DCF7D" stroke-width="2" opacity="0.5"/>
+</svg>

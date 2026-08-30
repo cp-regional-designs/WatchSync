@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <defs>
+    <linearGradient id="fur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFD6E8"/>
+      <stop offset="100%" stop-color="#FF9EC7"/>
+    </linearGradient>
+    <linearGradient id="inner" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFE4F0"/>
+      <stop offset="100%" stop-color="#FFB6D9"/>
+    </linearGradient>
+    <filter id="s" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <circle cx="128" cy="148" r="70" fill="none" stroke="#2a2a35" stroke-width="10"/>
+  <circle cx="128" cy="148" r="66" fill="none" stroke="#FF9EC7" stroke-width="3" opacity="0.7"/>
+  <!-- left ear -->
+  <path d="M72 100 L88 18 L125 95 Z" fill="#1a1a1a" filter="url(#s)"/>
+  <path d="M78 95 L94 32 L118 93 Z" fill="url(#fur)"/>
+  <path d="M86 92 L98 42 L112 91 Z" fill="url(#inner)"/>
+  <!-- right ear -->
+  <path d="M184 100 L168 18 L131 95 Z" fill="#1a1a1a" filter="url(#s)"/>
+  <path d="M178 95 L162 32 L138 93 Z" fill="url(#fur)"/>
+  <path d="M170 92 L158 42 L144 91 Z" fill="url(#inner)"/>
+  <!-- blush dots -->
+  <circle cx="70" cy="155" r="6" fill="#FF8FAB" opacity="0.45"/>
+  <circle cx="186" cy="155" r="6" fill="#FF8FAB" opacity="0.45"/>
+</svg>

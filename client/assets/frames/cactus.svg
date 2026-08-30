@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+
+  <defs>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2a2a35"/>
+      <stop offset="50%" stop-color="#1a1a22"/>
+      <stop offset="100%" stop-color="#0e0e14"/>
+    </linearGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.35"/>
+    </filter>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="1.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- avatar hole (transparent center) -->
+  <circle cx="128" cy="140" r="72" fill="none" stroke="url(#rim)" stroke-width="10"/>
+  <circle cx="128" cy="140" r="72" fill="none" stroke="#3d3d4a" stroke-width="2" opacity="0.8"/>
+
+  <rect x="114" y="35" width="28" height="95" rx="12" fill="#15803D" filter="url(#soft)"/>
+  <rect x="114" y="35" width="28" height="95" rx="12" fill="#22C55E"/>
+  <path d="M114 70 H88 A12 12 0 0 0 88 100 H114" fill="#22C55E" stroke="#15803D" stroke-width="2"/>
+  <path d="M142 85 H168 A12 12 0 0 1 168 115 H142" fill="#22C55E" stroke="#15803D" stroke-width="2"/>
+  <circle cx="128" cy="160" r="55" fill="none" stroke="#16A34A" stroke-width="6"/>
+  <circle cx="128" cy="160" r="51" fill="none" stroke="#86EFAC" stroke-width="2" opacity="0.5"/>
+</svg>

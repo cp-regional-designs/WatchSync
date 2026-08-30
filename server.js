@@ -18,7 +18,7 @@ loadDotEnv();
 
 const PORT = Number(process.env.PORT) || 8080;
 const TMDB_KEY = process.env.TMDB_API_KEY || "f9703eb434d9a5ada4c1df7ccf1a8855";
-const TMDB_TOKEN = process.env.TMDB_READ_TOKEN || "";
+const TMDB_TOKEN = process.env.TMDB_READ_TOKEN || "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJmOTcwM2ViNDM0ZDlhNWFkYTRjMWRmN2NjZjFhODg1NSIsIm5iZiI6MTc4NzkwMDM4OC44NjIwMDAyLCJzdWIiOiI2YTkxMzFlNGVjODE3NDBjM2JmN2UyNTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.bQRv5SjOWwqI_CbJw47-LJtg3gcbFYjX__CJ3qz8Tqg";
 const TMDB_BASE = "https://api.themoviedb.org/3";
 
 const app = express();

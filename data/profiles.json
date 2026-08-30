@@ -1,0 +1,59 @@
+{
+  "u_ff710fe5accc458a": {
+    "id": "u_ff710fe5accc458a",
+    "name": "ze",
+    "displayName": "ze",
+    "color": "#9D5CFF",
+    "avatar": "🎬",
+    "bio": "",
+    "joinedAt": 1788049216182,
+    "xp": 245,
+    "level": 3,
+    "watchTime": 0,
+    "moviesCompleted": 1,
+    "roomsCreated": 3,
+    "roomsJoined": 1,
+    "messagesSent": 3,
+    "favorites": [],
+    "history": [
+      {
+        "provider": "vidking",
+        "tmdbId": "1384216",
+        "mediaType": "movie",
+        "title": "The Dog Stars",
+        "poster": "https://image.tmdb.org/t/p/w500/5O616X9vmRzQdB68PHzBewPittd.jpg",
+        "src": "",
+        "season": null,
+        "episode": null,
+        "color": "9D5CFF",
+        "at": 1788050689703
+      }
+    ],
+    "achievements": [
+      "first_room",
+      "couples_room",
+      "first_heart",
+      "voice_first",
+      "first_watch"
+    ],
+    "ownedPacks": [
+      "pack_starter",
+      "pack_host",
+      "pack_date_night",
+      "pack_sweetheart",
+      "pack_voice"
+    ],
+    "cosmetics": {
+      "frame": "frame_none",
+      "font": "font_shine_sweep",
+      "nameplate": "np_classic",
+      "banner": "bn_aurora",
+      "effect": "fx_none",
+      "orb": "orb_online"
+    },
+    "username": "bravebyte8879",
+    "orbs": 125,
+    "reactCount": 14,
+    "couplesMessages": 3
+  }
+}

@@ -2829,7 +2829,19 @@ main, .pages, .page {
   justify-content: center !important;
   position: relative !important;
   z-index: 1 !important;
-  background: var(--purple2, #6d28d9);
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  transition: all 0.2s ease !important;
+}
+
+/* When a ring is equipped: avatar core scales to 74% to fit inside the ring hole seamlessly */
+.avatar-wrapper.has-ring .avatar-core {
+  width: 74% !important;
+  height: 74% !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
 }
 
 .avatar-wrapper .avatar-core img.avatar {
@@ -2849,16 +2861,17 @@ main, .pages, .page {
   justify-content: center !important;
   font-weight: 800 !important;
   color: #ffffff !important;
-  font-size: calc(var(--avatar-outer, 56px) * 0.45) !important;
+  background: var(--purple2, #6d28d9) !important;
+  font-size: calc(var(--avatar-outer, 56px) * 0.35) !important;
 }
 
-/* Pink Hearts Ring Overlay — centered math-perfectly over the avatar circle */
+/* Ring Overlay — sits centered at 108% over wrapper */
 .avatar-wrapper .avatar-ring {
   position: absolute !important;
   top: 50% !important;
   left: 50% !important;
-  width: 146% !important;
-  height: 146% !important;
+  width: 108% !important;
+  height: 108% !important;
   transform: translate(-50%, -50%) !important;
   object-fit: contain !important;
   pointer-events: none !important;
@@ -2869,10 +2882,10 @@ main, .pages, .page {
 
 .avatar-wrapper .status-orb {
   position: absolute !important;
-  bottom: 0 !important;
-  right: 0 !important;
-  width: calc(var(--avatar-outer, 56px) * 0.28) !important;
-  height: calc(var(--avatar-outer, 56px) * 0.28) !important;
+  bottom: -2px !important;
+  right: -2px !important;
+  width: calc(var(--avatar-outer, 56px) * 0.26) !important;
+  height: calc(var(--avatar-outer, 56px) * 0.26) !important;
   border-radius: 50% !important;
   border: 2px solid #0e0e15 !important;
   z-index: 4 !important;
@@ -2884,4 +2897,5 @@ main, .pages, .page {
   gap: 10px;
   margin-top: 4px;
 }
+
 

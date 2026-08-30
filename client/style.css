@@ -2795,7 +2795,7 @@ main, .pages, .page {
   margin-top: -32px !important;
 }
 .avatar-wrapper.lg {
-  --avatar-outer: 84px !important;
+  --avatar-outer: 112px;
 }
 @media (max-width: 640px) {
   .profile-name-row,
@@ -2803,7 +2803,7 @@ main, .pages, .page {
     font-size: 1rem !important;
   }
   .avatar-wrapper.lg {
-    --avatar-outer: 72px !important;
+    --avatar-outer: 96px;
   }
 }
 
@@ -2907,3 +2907,77 @@ main, .pages, .page {
 }
 
 
+
+
+/* ===== V1 profile rings (normalized PNG overlays) ===== */
+.cos-preview.frame-prev {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 8px;
+  border-radius: 14px;
+  background: #12121c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid #1A1A28;
+}
+.cos-preview.frame-prev.has-img {
+  background: radial-gradient(circle at 50% 50%, #1a1a28 0%, #0e0e15 100%);
+  padding: 4px;
+}
+.cos-preview.frame-prev.has-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  background: transparent;
+}
+.cos-preview.frame-prev.none-prev {
+  color: #6b6b80;
+  font-size: 22px;
+}
+
+/* Shared outer diameter; avatar sits in transparent hole */
+.avatar-wrapper {
+  position: relative;
+  flex-shrink: 0;
+  overflow: visible;
+}
+.avatar-wrapper.has-ring .avatar-core {
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.35);
+}
+.avatar-ring {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 100% !important;
+  height: 100% !important;
+  transform: translate(-50%, -50%) !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  z-index: 3 !important;
+  background: transparent !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+/* Profile header keeps ring inside card */
+.profile-header-main {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  padding: 0 16px 16px;
+  margin-top: -36px;
+  position: relative;
+  z-index: 2;
+}
+@media (max-width: 640px) {
+  .profile-header-main {
+    margin-top: -28px;
+    gap: 12px;
+  }
+}

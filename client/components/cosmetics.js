@@ -13,7 +13,7 @@
     { id: "orb", name: "Status Orbs" },
   ];
 
-  /* No image frames by default — only "None" */
+  /* Profile rings — transparent PNG overlays (normalized 512×512) */
   const IMAGE_FRAMES = [
     {
       id: "frame_none",
@@ -24,16 +24,58 @@
       image: false,
       cat: "frame",
       colors: ["#9D5CFF", "#6D28D9"],
+      hole: 100,
     },
     {
-      id: "frame_pink_hearts",
-      name: "Pink Hearts Ring",
-      src: "/assets/frames/ring_pink_hearts.png",
+      id: "pinkheart",
+      name: "Pink Hearts",
+      src: "/assets/frames/pinkheart_ring.png",
       rarity: "legendary",
       image: true,
       cat: "frame",
-      colors: ["#ff4d8d", "#ff8fab"]
-    }
+      colors: ["#ff6fae", "#ff8fab"],
+      hole: 62,
+    },
+    {
+      id: "gold",
+      name: "Royal Gold",
+      src: "/assets/frames/gold_ring.png",
+      rarity: "legendary",
+      image: true,
+      cat: "frame",
+      colors: ["#f5e6a8", "#c9a227"],
+      hole: 58,
+    },
+    {
+      id: "purple",
+      name: "Purple Starlight",
+      src: "/assets/frames/purple_ring.png",
+      rarity: "legendary",
+      image: true,
+      cat: "frame",
+      colors: ["#c084fc", "#9D5CFF"],
+      hole: 60,
+    },
+    {
+      id: "blueice",
+      name: "Blue Ice",
+      src: "/assets/frames/blueice_ring.png",
+      rarity: "legendary",
+      image: true,
+      cat: "frame",
+      colors: ["#7dd3fc", "#38bdf8"],
+      hole: 62,
+    },
+    {
+      id: "black",
+      name: "Crimson Shadow",
+      src: "/assets/frames/black_ring.png",
+      rarity: "legendary",
+      image: true,
+      cat: "frame",
+      colors: ["#1a1a1a", "#b91c1c"],
+      hole: 56,
+    },
   ];
 
   /* Real Google Fonts + CSS motion for "animated" styles */
@@ -179,7 +221,8 @@
     Object.keys(d).forEach((k) => {
       if (!me.cosmetics[k] || !getItem(me.cosmetics[k])) me.cosmetics[k] = d[k];
     });
-    // Migrate removed frames → none
+    // Migrate removed / renamed frames
+    if (me.cosmetics.frame === "frame_pink_hearts") me.cosmetics.frame = "pinkheart";
     if (me.cosmetics.frame && !getItem(me.cosmetics.frame)) me.cosmetics.frame = "frame_none";
     me.ownedPacks = me.ownedPacks || ["pack_starter"];
     me.ownedCosmetics = me.ownedCosmetics || allItems().map((x) => x.id);
@@ -218,6 +261,7 @@
     const frame = getItem(me.cosmetics.frame);
     const orb = getItem(me.cosmetics.orb);
     const hasRing = frame && frame.src && frame.id !== "frame_none";
+    const hole = hasRing && frame.hole ? frame.hole : 56;
     const name = me.displayName || me.name || "?";
     const letter = String(name).charAt(0).toUpperCase();
     const color = me.color || "#9D5CFF";
@@ -230,13 +274,12 @@
           me.avatar && String(me.avatar).length <= 3 ? me.avatar : letter
         )}</div>`;
     const ringHtml = hasRing
-      ? `<img class="avatar-ring" src="${esc(frame.src)}" alt="" draggable="false" />`
+      ? `<img class="avatar-ring" src="${esc(frame.src)}" alt="" draggable="false" loading="lazy" />`
       : "";
-    const fxId = activeEffect(me);
     const orbHtml = orb
       ? `<span class="status-orb" style="background:${esc((orb.colors && orb.colors[0]) || "#3ddc84")}" title="${esc(orb.name)}"></span>`
       : "";
-    return `<div class="avatar-wrapper ${sizeClass || "md"}${hasRing ? " has-ring" : ""}" style="--avatar-outer:${outer}px" data-frame="${esc((frame && frame.id) || "")}">
+    return `<div class="avatar-wrapper ${sizeClass || "md"}${hasRing ? " has-ring" : ""}" style="--avatar-outer:${outer}px;--hole:${hole}%" data-frame="${esc((frame && frame.id) || "")}">
       <div class="avatar-core">${core}</div>
       ${ringHtml}
       ${orbHtml}
@@ -311,8 +354,11 @@
         const cards = items
           .map((it) => {
             const eq = me.cosmetics.frame === it.id;
+            const prev = it.src
+              ? `<div class="cos-preview frame-prev has-img"><img src="${esc(it.src)}" alt="" /></div>`
+              : `<div class="cos-preview frame-prev none-prev">○</div>`;
             return `<button type="button" class="cosmo-item cos-card ${eq ? "equipped" : ""}" data-cat="frame" data-id="${esc(it.id)}">
-              <div class="cos-preview frame-prev none-prev">${it.id === "frame_none" ? "○" : ""}</div>
+              ${prev}
               <span class="cos-name">${esc(it.name)}</span>
               <span class="cos-rarity">${esc(rarityLabel(it.rarity))}</span>
               ${eq ? '<em class="cos-eq">Equipped</em>' : ""}

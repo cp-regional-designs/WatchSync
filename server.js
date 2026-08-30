@@ -361,6 +361,21 @@ io.on("connection", (socket) => {
       cosmetics: user?.cosmetics || null,
     };
     store.upsertProfile(id, socket.data.user);
+    // If already in a room, refresh member cosmetics so others see equipped rings
+    const code = socket.data.room;
+    if (code) {
+      const room = rooms.get(code);
+      if (room && room.users && room.users.has(id)) {
+        const prev = room.users.get(id) || {};
+        room.users.set(id, {
+          ...prev,
+          ...socket.data.user,
+          isHost: prev.isHost || id === room.hostId,
+          joinedAt: prev.joinedAt || Date.now(),
+        });
+        io.to(code).emit("room:state", rooms.publicRoom(room));
+      }
+    }
     if (typeof cb === "function") cb({ ok: true, user: socket.data.user });
   });
 

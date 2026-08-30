@@ -35,7 +35,7 @@
       image: true,
       cat: "frame",
       colors: ["#ff4d8d", "#ff8fab"],
-      hole: 58,
+      hole: 72,
       legacy: true,
     },
     /* NEW additive rings (exact filenames from assets) */
@@ -47,7 +47,7 @@
       image: true,
       cat: "frame",
       colors: ["#ff6fae", "#ff8fab"],
-      hole: 62,
+      hole: 72,
     },
     {
       id: "gold",
@@ -57,7 +57,7 @@
       image: true,
       cat: "frame",
       colors: ["#f5e6a8", "#c9a227"],
-      hole: 58,
+      hole: 70,
     },
     {
       id: "purple",
@@ -67,7 +67,7 @@
       image: true,
       cat: "frame",
       colors: ["#c084fc", "#9D5CFF"],
-      hole: 60,
+      hole: 72,
     },
     {
       id: "blueice",
@@ -77,7 +77,7 @@
       image: true,
       cat: "frame",
       colors: ["#7dd3fc", "#38bdf8"],
-      hole: 62,
+      hole: 72,
     },
     {
       id: "black",
@@ -87,7 +87,7 @@
       image: true,
       cat: "frame",
       colors: ["#1a1a1a", "#b91c1c"],
-      hole: 56,
+      hole: 68,
     },
   ];
 
@@ -281,7 +281,7 @@
     const frame = getItem(me.cosmetics.frame);
     const orb = getItem(me.cosmetics.orb);
     const hasRing = frame && frame.src && frame.id !== "frame_none";
-    const hole = hasRing && frame.hole ? frame.hole : 56;
+    const hole = hasRing && frame.hole ? frame.hole : 70;
     const name = me.displayName || me.name || "?";
     const letter = String(name).charAt(0).toUpperCase();
     const color = me.color || "#9D5CFF";

@@ -2350,8 +2350,8 @@ main, .pages, .page {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 56%;
-  height: 56%;
+  width: var(--hole, 70%);
+  height: var(--hole, 70%);
   transform: translate(-50%, -50%);
   border-radius: 50%;
   overflow: hidden;
@@ -2835,13 +2835,16 @@ main, .pages, .page {
   background: transparent !important;
   box-shadow: none !important;
   border: none !important;
-  transition: all 0.2s ease !important;
+}
+.avatar-wrapper.has-ring .avatar-core {
+  width: var(--hole, 70%) !important;
+  height: var(--hole, 70%) !important;
 }
 
-/* Python floodfill measurement: inner hole is exactly 64.434% of centered canvas */
+/* PFP fills the transparent center of the ring (per-frame --hole) */
 .avatar-wrapper.has-ring .avatar-core {
-  width: 64.43% !important;
-  height: 64.43% !important;
+  width: var(--hole, 70%) !important;
+  height: var(--hole, 70%) !important;
   background: transparent !important;
   box-shadow: none !important;
   border: none !important;

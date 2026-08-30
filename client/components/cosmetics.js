@@ -27,13 +27,94 @@
     },
     {
       id: "frame_pink_hearts",
-      name: "Pink Hearts",
+      name: "Pink Hearts Ring",
       src: "/assets/frames/ring_pink_hearts.png",
       rarity: "legendary",
       image: true,
       cat: "frame",
-      colors: ["#ff6fae", "#ff8fab"]
+      colors: ["#ff4d8d", "#ff8fab"]
     },
+    {
+      id: "frame_ribbon",
+      name: "Coquette Pink Ribbon",
+      src: "/assets/frames/ring_ribbon.png",
+      rarity: "epic",
+      image: true,
+      cat: "frame",
+      colors: ["#ff8fab", "#ffb4d9"]
+    },
+    {
+      id: "frame_pfp_hearts",
+      name: "Valentine Hearts Halo",
+      src: "/assets/frames/pfp_hearts.png",
+      rarity: "legendary",
+      image: true,
+      cat: "frame",
+      colors: ["#ff1493", "#ff69b4"]
+    },
+    {
+      id: "frame_pfp_bow",
+      name: "Pink Velvet Bow",
+      src: "/assets/frames/pfp_bow.png",
+      rarity: "epic",
+      image: true,
+      cat: "frame",
+      colors: ["#ffb6c1", "#fff0f5"]
+    },
+    {
+      id: "frame_ai_hearts",
+      name: "Floating Hearts",
+      src: "/assets/frames/ai_hearts.png",
+      rarity: "rare",
+      image: true,
+      cat: "frame",
+      colors: ["#ff4d8d", "#ff8fab"]
+    },
+    {
+      id: "frame_ai_bow",
+      name: "Coquette Bowtie",
+      src: "/assets/frames/ai_bow.png",
+      rarity: "rare",
+      image: true,
+      cat: "frame",
+      colors: ["#ff69b4", "#ffb6c1"]
+    },
+    {
+      id: "frame_ai_angel",
+      name: "Cupid Angel Wings",
+      src: "/assets/frames/ai_angel.png",
+      rarity: "legendary",
+      image: true,
+      cat: "frame",
+      colors: ["#fff0f5", "#ffb6c1"]
+    },
+    {
+      id: "frame_ai_flower",
+      name: "Sakura Blossom Garden",
+      src: "/assets/frames/ai_flower.png",
+      rarity: "rare",
+      image: true,
+      cat: "frame",
+      colors: ["#ffc0cb", "#ff69b4"]
+    },
+    {
+      id: "frame_cherry",
+      name: "Sweet Cherry",
+      src: "/assets/frames/cherry.svg",
+      rarity: "uncommon",
+      image: true,
+      cat: "frame",
+      colors: ["#ff1493", "#ff69b4"]
+    },
+    {
+      id: "frame_strawberry",
+      name: "Strawberry Milkshake",
+      src: "/assets/frames/strawberry.svg",
+      rarity: "uncommon",
+      image: true,
+      cat: "frame",
+      colors: ["#ff80bf", "#ffb3d9"]
+    }
   ];
 
   /* Real Google Fonts + CSS motion for "animated" styles */
@@ -58,7 +139,7 @@
     { id: "font_neon_pulse", name: "Neon Pulse", family: "'Space Grotesk', system-ui, sans-serif", rarity: "epic", cat: "font", animated: true, style: "font-family:'Space Grotesk',system-ui,sans-serif;font-weight:700", previewClass: "txt-neon-pulse" },
     { id: "font_gold_glow", name: "Gold Glow", family: "'Outfit', system-ui, sans-serif", rarity: "epic", cat: "font", animated: true, style: "font-family:'Outfit',system-ui,sans-serif;font-weight:800", previewClass: "txt-gold-glow" },
     { id: "font_candy", name: "Candy Wave", family: "'Nunito', system-ui, sans-serif", rarity: "legendary", cat: "font", animated: true, style: "font-family:'Nunito',system-ui,sans-serif;font-weight:800", previewClass: "txt-candy" },
-        { id: "font_shine_sweep", name: "Shine Sweep", family: "'Outfit', system-ui, sans-serif", rarity: "legendary", cat: "font", animated: true, style: "font-family:'Outfit',system-ui,sans-serif;font-weight:800", previewClass: "txt-shine-sweep" },
+    { id: "font_shine_sweep", name: "Shine Sweep", family: "'Outfit', system-ui, sans-serif", rarity: "legendary", cat: "font", animated: true, style: "font-family:'Outfit',system-ui,sans-serif;font-weight:800", previewClass: "txt-shine-sweep" },
     { id: "font_silver_wave", name: "Silver Wave", family: "'Inter', system-ui, sans-serif", rarity: "epic", cat: "font", animated: true, style: "font-family:'Inter',system-ui,sans-serif;font-weight:700", previewClass: "txt-silver-wave" },
     { id: "font_hot_pink", name: "Hot Pink Glow", family: "'Poppins', system-ui, sans-serif", rarity: "legendary", cat: "font", animated: true, style: "font-family:'Poppins',system-ui,sans-serif;font-weight:800", previewClass: "txt-hot-pink" },
     { id: "font_ice", name: "Ice Glow", family: "'Inter', system-ui, sans-serif", rarity: "rare", cat: "font", animated: true, style: "font-family:'Inter',system-ui,sans-serif;font-weight:700", previewClass: "txt-ice" },
@@ -66,6 +147,12 @@
 
   const NAMEPLATES = [
     { id: "np_classic", name: "Classic", rarity: "common", cat: "nameplate", colors: ["#C084FC", "#9D5CFF"], style: "", previewClass: "np-classic" },
+    { id: "np_pink_princess", name: "Pink Princess 👑", rarity: "legendary", cat: "nameplate", colors: ["#FF94C2", "#FFB2D6"], style: "color:#FF94C2;text-shadow:0 0 12px rgba(255,148,194,.8),0 0 24px rgba(255,182,193,.6);font-weight:800", previewClass: "np-pink-princess" },
+    { id: "np_sweetheart", name: "Sweetheart 💖", rarity: "legendary", cat: "nameplate", colors: ["#FF4D8D", "#FF8FAB"], style: "color:#FF4D8D;text-shadow:0 0 14px rgba(255,77,141,.7);font-weight:800", previewClass: "np-sweetheart" },
+    { id: "np_coquette", name: "Coquette Dream 🎀", rarity: "epic", cat: "nameplate", colors: ["#FFB6C1", "#FFF0F5"], style: "color:#FFB6C1;font-family:'Dancing Script',cursive;font-size:1.15em;font-weight:700", previewClass: "np-coquette" },
+    { id: "np_cupid", name: "Cupid's Arrow 💘", rarity: "epic", cat: "nameplate", colors: ["#FF1493", "#FF69B4"], style: "color:#FF1493;text-shadow:0 0 10px rgba(255,20,147,.6)", previewClass: "np-cupid" },
+    { id: "np_sakura", name: "Sakura Bloom 🌸", rarity: "rare", cat: "nameplate", colors: ["#FFC0CB", "#FFB6C1"], style: "color:#FFC0CB;text-shadow:0 0 8px rgba(255,192,203,.8)", previewClass: "np-sakura" },
+    { id: "np_love_letter", name: "Love Letter 💌", rarity: "rare", cat: "nameplate", colors: ["#FF6FAE", "#FFB4D9"], style: "background:linear-gradient(90deg,#ff6fae,#ffb4d9);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800", previewClass: "np-love-letter" },
     { id: "np_neon", name: "Neon Violet", rarity: "rare", cat: "nameplate", colors: ["#E879F9", "#9D5CFF"], style: "text-shadow:0 0 12px rgba(157,92,255,.85),0 0 24px rgba(232,121,249,.4);color:#F5D0FE", previewClass: "np-neon" },
     { id: "np_cinema", name: "Cinema Gold", rarity: "rare", cat: "nameplate", colors: ["#FBBF24", "#F59E0B"], style: "color:#FDE68A;text-shadow:0 1px 0 #92400E,0 0 16px rgba(251,191,36,.35)", previewClass: "np-cinema" },
     { id: "np_pixel", name: "Pixel Tag", rarity: "epic", cat: "nameplate", colors: ["#4ADE80", "#22C55E"], style: "font-family:'Press Start 2P',monospace;font-size:0.7em;color:#86EFAC;letter-spacing:0.06em", previewClass: "np-pixel" },
@@ -76,7 +163,7 @@
     { id: "np_cyber", name: "Cyber", rarity: "epic", cat: "nameplate", colors: ["#22D3EE", "#A78BFA"], style: "color:#67E8F9;text-shadow:0 0 10px rgba(34,211,238,.6),0 0 2px #22D3EE;letter-spacing:0.08em;text-transform:uppercase;font-size:0.88em", previewClass: "np-cyber" },
     { id: "np_ember", name: "Ember", rarity: "rare", cat: "nameplate", colors: ["#FB923C", "#EF4444"], style: "color:#FDBA74;text-shadow:0 0 12px rgba(239,68,68,.45)", previewClass: "np-ember" },
     { id: "np_mint", name: "Mint", rarity: "uncommon", cat: "nameplate", colors: ["#6EE7B7", "#34D399"], style: "color:#A7F3D0", previewClass: "np-mint" },
-        { id: "np_shine", name: "Shine Bar", rarity: "legendary", cat: "nameplate", colors: ["#F5D0FE", "#C084FC"], style: "", previewClass: "np-shine" },
+    { id: "np_shine", name: "Shine Bar", rarity: "legendary", cat: "nameplate", colors: ["#F5D0FE", "#C084FC"], style: "", previewClass: "np-shine" },
     { id: "np_glow_pink", name: "Pink Glow", rarity: "epic", cat: "nameplate", colors: ["#FF6FAE", "#FF8FAB"], style: "color:#FFB4D9", previewClass: "np-glow-pink" },
     { id: "np_laser", name: "Laser Sweep", rarity: "legendary", cat: "nameplate", colors: ["#67E8F9", "#C084FC"], style: "", previewClass: "np-laser" },
     { id: "np_ghost", name: "Ghost", rarity: "rare", cat: "nameplate", colors: ["#E2E8F0", "#94A3B8"], style: "color:#E2E8F0;opacity:0.92;letter-spacing:0.12em;font-weight:500", previewClass: "np-ghost" },
@@ -84,6 +171,11 @@
 
   const BANNERS = [
     { id: "bn_void", name: "Void", rarity: "common", cat: "banner", css: "linear-gradient(135deg,#0E0E15 0%,#1a1028 50%,#0E0E15 100%)" },
+    { id: "bn_valentines", name: "Valentine Hearts 💖", rarity: "legendary", cat: "banner", css: "linear-gradient(135deg,#ff1493 0%,#ff69b4 50%,#ffb6c1 100%)" },
+    { id: "bn_pink_glitter", name: "Pink Velvet ✨", rarity: "legendary", cat: "banner", css: "linear-gradient(120deg,#2a0015 0%,#800040 40%,#ff69b4 70%,#ffc0cb 100%)" },
+    { id: "bn_coquette_bow", name: "Coquette Ribbon 🎀", rarity: "epic", cat: "banner", css: "linear-gradient(135deg,#4a001a 0%,#990033 50%,#ff80ab 100%)" },
+    { id: "bn_strawberry_dream", name: "Strawberry Milk 🍓", rarity: "epic", cat: "banner", css: "linear-gradient(120deg,#ff80bf 0%,#ffb3d9 50%,#ffe6f2 100%)" },
+    { id: "bn_cupid_cloud", name: "Cupid Sky ☁️", rarity: "rare", cat: "banner", css: "linear-gradient(135deg,#ff99cc 0%,#ffccff 50%,#ffe6f2 100%)" },
     { id: "bn_aurora", name: "Aurora", rarity: "rare", cat: "banner", css: "linear-gradient(120deg,#1a0533 0%,#6D28D9 40%,#FF6FAE 100%)" },
     { id: "bn_rose", name: "Rose Night", rarity: "epic", cat: "banner", css: "linear-gradient(135deg,#1a0510 0%,#9D174D 45%,#FF6FAE 100%)" },
     { id: "bn_cinema", name: "Cinema Glow", rarity: "uncommon", cat: "banner", css: "linear-gradient(90deg,#0a0a0f 0%,#2a1840 50%,#0a0a0f 100%)" },
@@ -106,6 +198,9 @@
 
   const ORBS = [
     { id: "orb_online", name: "Online", rarity: "common", cat: "orb", colors: ["#3ddc84", "#22c55e"] },
+    { id: "orb_pink_heart", name: "Sweet Heart 💖", rarity: "legendary", cat: "orb", colors: ["#FF4D8D", "#FF8FAB"] },
+    { id: "orb_in_love", name: "In Love 💕", rarity: "legendary", cat: "orb", colors: ["#FF1493", "#FF69B4"] },
+    { id: "orb_cupid", name: "Cupid's Touch 💘", rarity: "epic", cat: "orb", colors: ["#FFB6C1", "#FFF0F5"] },
     { id: "orb_watching", name: "Watching", rarity: "uncommon", cat: "orb", colors: ["#9D5CFF", "#6D28D9"] },
     { id: "orb_busy", name: "Busy", rarity: "common", cat: "orb", colors: ["#ef4444", "#b91c1c"] },
     { id: "orb_away", name: "Away", rarity: "common", cat: "orb", colors: ["#FBBF24", "#D97706"] },

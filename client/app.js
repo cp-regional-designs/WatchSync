@@ -833,9 +833,19 @@
   }
 
   function loadVideo(video, startAt, asHostAction) {
-    if (!state.player) return;
+    if (!state.player || !video) return;
+    const key = videoKey(video);
+    const cur = state.player.current && state.player.current();
+    const same = cur && videoKey(cur) === key;
+    // Avoid reloading the same media (prevents Vidking "Loading content" loops)
+    if (same && !asHostAction) {
+      if (startAt && startAt > 1 && Math.abs((state.player.getCurrentTime() || 0) - startAt) > 5) {
+        try { state.player.seek(startAt); } catch (_) {}
+      }
+      return;
+    }
     state.player.load(video, startAt || 0);
-    if (asHostAction) {
+    if (asHostAction && state.socket) {
       state.socket.emit("video:load", video);
     }
     state.me.history = [{ ...video, at: Date.now() }, ...(state.me.history || [])].slice(0, 20);
@@ -981,17 +991,20 @@
     const isVidking = !!(cur && (cur.provider === "vidking" || (!cur.provider && cur.tmdbId)));
     const isHtml5 = !!(cur && cur.provider === "html5");
 
-    const softThresh = isHtml5 ? 0.4 : isVidking ? 2.0 : 0.8;
-    const hardThresh = isHtml5 ? 1.25 : isVidking ? 4.0 : 2.5;
+    // Vidking iframe reloads are expensive — use wide thresholds to avoid
+    // "Loading content… / Refreshes…" loops.
+    const softThresh = isHtml5 ? 0.4 : isVidking ? 8.0 : 0.8;
+    const hardThresh = isHtml5 ? 1.25 : isVidking ? 20.0 : 2.5;
     const isForce = action === "force" || action === "resync" || action === "load";
     const isControl = action === "play" || action === "pause" || action === "seek" || action === "skip";
 
+    // Tick path: only fix play/pause unless drift is huge
     if (!isForce && action === "tick") {
-      const minGap = isVidking ? 1800 : 350;
+      const minGap = isVidking ? 5000 : 350;
       if (nowMs - state.sync.lastApply < minGap && abs < hardThresh) {
         try {
           if (shouldPlay && !state.player.isPlaying()) state.player.play();
-          if (!shouldPlay && state.player.isPlaying()) state.player.pause();
+          else if (!shouldPlay && state.player.isPlaying()) state.player.pause();
         } catch (_) {}
         setSyncDot(abs);
         return;
@@ -1002,23 +1015,44 @@
     state.sync.lastApply = nowMs;
 
     try {
-      if (isForce || isControl || abs > softThresh) {
-        if (isVidking && (isForce || abs > softThresh)) {
-          if (typeof state.player.reloadAt === "function") state.player.reloadAt(target);
-          else state.player.seek(target);
+      // Pause must tear down / stop without a seek storm
+      if (isControl && action === "pause") {
+        state.player.pause();
+        setSyncDot(abs);
+        setTimeout(() => { state.applying = false; }, 200);
+        return;
+      }
+
+      const needSeek = isForce || (isControl && action !== "play") || abs > softThresh;
+
+      if (needSeek) {
+        if (isVidking) {
+          if (isForce || abs > hardThresh) {
+            // Hard path only for manual Sync / huge drift
+            if (typeof state.player.reloadAt === "function") state.player.reloadAt(target);
+            else state.player.seek(target);
+          } else {
+            // Soft: update estimated clock only via seek() which is throttled inside provider
+            state.player.seek(target);
+          }
         } else {
           state.player.seek(target);
         }
       }
-      if (shouldPlay) state.player.play();
-      else state.player.pause();
+
+      // Match play state WITHOUT forcing another iframe reload when possible
+      if (shouldPlay) {
+        if (!state.player.isPlaying()) state.player.play();
+      } else {
+        if (state.player.isPlaying()) state.player.pause();
+      }
     } catch (err) {
       console.warn("[sync] apply failed", err);
       setSyncBtn("error", "Seek failed");
     }
 
     setSyncDot(abs);
-    setTimeout(() => { state.applying = false; }, isVidking ? 800 : 200);
+    setTimeout(() => { state.applying = false; }, isVidking ? 1200 : 200);
   }
 
   function setSyncDot(absDrift) {
@@ -1072,7 +1106,7 @@
   setInterval(() => {
     if (!state.isHost) return;
     hostBroadcast("tick");
-  }, 1000);
+  }, 2000);
 
   setInterval(() => {
     if (state.isHost || !state.player || !state.room) return;
@@ -1086,15 +1120,16 @@
       }
     }
     applySyncNow("tick");
-  }, 500);
+  }, 1000);
 
   setInterval(() => {
     if (state.isHost || !state.room || !state.socket) return;
-    if (Date.now() - (state.lastSync || 0) > 4000) {
+    if (Date.now() - (state.lastSync || 0) > 12000) {
+      // Soft resync only — never force-reload embed on quiet link
       state.socket.emit("sync:request", { force: false });
       $("#syncDot")?.classList.add("red");
     }
-  }, 3000);
+  }, 8000);
 
   function addMessage(m) {
     const log = $("#chatLog");

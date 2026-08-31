@@ -91,7 +91,7 @@
       const factory = global.WSProviders[kind];
       provider = factory.create(stage);
       provider.setHandler?.((ev) => {
-        if (ev.type === "ready") showLoading(false);
+        if (ev.type === "ready") { showLoading(false); clearTimeout(provider && provider._loadingSafety); }
         if ((typeof isHost === "function" ? isHost() : isHost) && ev.type && ev.type !== "ready") {
           onHostEvent(ev);
         }
@@ -113,6 +113,9 @@
       provider.load(video, startAt);
       // Always lock Vidking for everyone — host may unlock briefly
       setLocked(kindNow === "vidking");
+      // Safety: never leave loading spinner forever if provider stalls
+      clearTimeout(provider._loadingSafety);
+      provider._loadingSafety = setTimeout(() => showLoading(false), 6000);
     }
 
     return {
@@ -134,7 +137,15 @@
       },
       reloadAt(t) {
         if (!current) return;
+        // Prefer provider forceSeek (vidking) to avoid full remount storms
+        if (provider && typeof provider.forceSeek === "function") {
+          provider.forceSeek(t);
+          return;
+        }
         load(current, t);
+      },
+      softSeek(t) {
+        provider?.seek?.(t);
       },
       current() {
         return current;

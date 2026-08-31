@@ -3080,3 +3080,319 @@ body.is-host .sync-to-host {
     padding: 5px 10px;
   }
 }
+
+
+/* ============================================================
+   WatchSync FORM SYSTEM — custom inputs, toggles, buttons
+   ============================================================ */
+.ws-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 12px;
+}
+.ws-field > span.label,
+.ws-field > .label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8B8B9E;
+}
+.ws-input,
+.modal-card input[type="text"],
+.modal-card input:not([type]),
+.modal-card input[type="password"],
+.modal-card input[type="search"],
+.gate-card input,
+.search-row input,
+.form input:not([type="checkbox"]):not([type="file"]):not([type="radio"]),
+.chat-form input,
+.host-tools input,
+.form select,
+.search-row select,
+#setColor {
+  width: 100%;
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(14, 14, 21, 0.95);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.ws-input:hover,
+.modal-card input:hover,
+.gate-card input:hover,
+.search-row input:hover,
+.form input:not([type="checkbox"]):not([type="file"]):hover,
+.chat-form input:hover {
+  border-color: rgba(157, 92, 255, 0.35);
+}
+.ws-input:focus,
+.modal-card input:focus,
+.gate-card input:focus,
+.search-row input:focus,
+.form input:not([type="checkbox"]):not([type="file"]):focus,
+.chat-form input:focus,
+.form select:focus,
+.search-row select:focus {
+  border-color: var(--purple, #9D5CFF);
+  box-shadow: 0 0 0 3px rgba(157, 92, 255, 0.22);
+}
+.ws-input::placeholder,
+input::placeholder {
+  color: #5c5c72;
+}
+.ws-input:disabled,
+input:disabled,
+select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+textarea.ws-input,
+.form textarea {
+  height: auto;
+  min-height: 88px;
+  padding: 12px 14px;
+  resize: vertical;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(14, 14, 21, 0.95);
+  color: #fff;
+}
+
+/* Custom checkbox */
+.ws-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 14px;
+  color: #d4d4e0;
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+.ws-check:hover {
+  background: rgba(157, 92, 255, 0.08);
+  border-color: rgba(157, 92, 255, 0.15);
+}
+.ws-check input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+.ws-check .box {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  border: 1.5px solid rgba(255,255,255,0.18);
+  background: #0a0a10;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+}
+.ws-check .box svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.12s, transform 0.12s;
+  stroke: #fff;
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ws-check input:checked + .box {
+  background: linear-gradient(135deg, #9D5CFF, #6D28D9);
+  border-color: transparent;
+  box-shadow: 0 0 12px rgba(157, 92, 255, 0.45);
+}
+.ws-check input:checked + .box svg {
+  opacity: 1;
+  transform: scale(1);
+}
+.ws-check input:focus-visible + .box {
+  outline: 2px solid #C084FC;
+  outline-offset: 2px;
+}
+.ws-check input:disabled + .box {
+  opacity: 0.4;
+}
+
+/* Toggle switch */
+.ws-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  margin: 0 0 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(14, 14, 21, 0.6);
+  cursor: pointer;
+  user-select: none;
+}
+.ws-toggle .tog-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e4e4ef;
+}
+.ws-toggle .tog-hint {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: #6b6b7b;
+  margin-top: 2px;
+}
+.ws-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.ws-toggle .track {
+  width: 44px;
+  height: 26px;
+  border-radius: 999px;
+  background: #1a1a28;
+  border: 1px solid rgba(255,255,255,0.1);
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.18s, border-color 0.18s, box-shadow 0.18s;
+}
+.ws-toggle .track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #c4c4d4;
+  transition: transform 0.18s, background 0.18s;
+}
+.ws-toggle input:checked + .track {
+  background: linear-gradient(135deg, #9D5CFF, #6D28D9);
+  border-color: transparent;
+  box-shadow: 0 0 14px rgba(157, 92, 255, 0.4);
+}
+.ws-toggle input:checked + .track::after {
+  transform: translateX(18px);
+  background: #fff;
+}
+.ws-toggle input:focus-visible + .track {
+  outline: 2px solid #C084FC;
+  outline-offset: 2px;
+}
+
+/* Buttons polish */
+.btn-primary, .btn-ghost, .btn-danger, .file-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.12s, background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #9D5CFF, #6D28D9);
+  border: none;
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(109, 40, 217, 0.35);
+}
+.btn-primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled, .btn-ghost:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  filter: none;
+}
+.btn-ghost {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #e4e4ef;
+}
+.btn-ghost:hover {
+  background: rgba(157, 92, 255, 0.12);
+  border-color: rgba(157, 92, 255, 0.35);
+}
+.btn-danger {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #fecaca;
+  padding: 0 16px;
+  height: 42px;
+}
+.btn-danger:hover { background: rgba(239, 68, 68, 0.28); }
+
+/* Modal polish */
+.modal {
+  background: rgba(5, 5, 10, 0.72);
+  backdrop-filter: blur(10px);
+}
+.modal-card {
+  background: linear-gradient(180deg, #12121c 0%, #0c0c14 100%);
+  border: 1px solid rgba(157, 92, 255, 0.22);
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.03) inset;
+  padding: 20px 20px 16px;
+  max-width: min(420px, calc(100vw - 24px));
+  width: 100%;
+  max-height: min(90vh, 640px);
+  overflow: auto;
+}
+.modal-card h3 {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0 0 14px;
+  letter-spacing: -0.02em;
+}
+.modal-card .row {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+.modal-card .row .btn-primary,
+.modal-card .row .btn-ghost {
+  flex: 1;
+  height: 44px;
+}
+.modal-card .hp-section {
+  margin-top: 4px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b6b7b;
+}
+
+/* Select */
+.form select,
+.search-row select,
+#setColor,
+#roomSort {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%9D5CFF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  cursor: pointer;
+}

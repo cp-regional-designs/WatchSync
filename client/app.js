@@ -223,6 +223,7 @@
     socket.on("room:state", onRoomState);
     socket.on("video:load", (video) => loadVideo(video, 0, false));
     socket.on("sync:state", onSync);
+    socket.on("sync:negotiate", onSyncNegotiate);
     socket.on("chat:message", addMessage);
     socket.on("chat:system", (m) => addSystem(m.text));
     socket.on("chat:typing", (t) => {
@@ -492,17 +493,27 @@
     }
     const roomName = (state.me.name || "Guest") + "'s Room";
     showModal(`<h3>Create room</h3>
-      <label class="field">Name
-        <input id="crName" value="${esc(roomName)}" />
+      <div class="ws-field">
+        <span class="label">Room name</span>
+        <input class="ws-input" id="crName" value="${esc(roomName)}" maxlength="48" autocomplete="off" />
+      </div>
+      <label class="ws-toggle">
+        <span><span class="tog-label">Couples room</span><span class="tog-hint">Max 2 people · private date night</span></span>
+        <input type="checkbox" id="crCouples" />
+        <span class="track" aria-hidden="true"></span>
       </label>
-      <label class="field check"><input type="checkbox" id="crCouples" /> <span>💞 Couples room (max 2 people · private date night)</span></label>
-      <label class="field check"><input type="checkbox" id="crPublic" /> Public (shows in browser)</label>
-      <label class="field">Password (optional)
-        <input id="crPass" type="password" autocomplete="new-password" />
+      <label class="ws-toggle">
+        <span><span class="tog-label">Public</span><span class="tog-hint">Show in room browser</span></span>
+        <input type="checkbox" id="crPublic" />
+        <span class="track" aria-hidden="true"></span>
       </label>
+      <div class="ws-field">
+        <span class="label">Password (optional)</span>
+        <input class="ws-input" id="crPass" type="password" autocomplete="new-password" />
+      </div>
       <div class="row">
         <button class="btn-ghost" type="button" id="crCancel">Cancel</button>
-        <button class="btn-primary" type="button" id="crGo" style="margin:0">Create</button>
+        <button class="btn-primary" type="button" id="crGo">Create</button>
       </div>`);
     const crC = $("#crCouples");
     const crP = $("#crPublic");
@@ -909,28 +920,109 @@
     try { if (window.lucide) lucide.createIcons(); } catch (_) {}
   }
 
+  state.sync.seq = state.sync.seq || 0;
+  state.sync.txActive = false;
+  state.sync.hostWasPlaying = false;
+
   function requestHostSync(force) {
     if (!state.socket || !state.room) {
       setSyncBtn("error", "No room");
       toast("Not connected to a room");
       return;
     }
+    if (state.sync.txActive) return;
     if (state.isHost) {
-      hostBroadcast("force");
-      setSyncBtn("synced", "Broadcast");
-      toast("Sent current position to room");
+      // Host can run the same transaction to snap the room to themselves
+      beginHostSyncTransaction();
       return;
     }
     setSyncBtn("syncing");
-    state.sync._forceUntil = Date.now() + 4000;
-    state.socket.emit("sync:request", { force: !!force });
+    state.sync.txActive = true;
+    state.sync._forceUntil = Date.now() + 6000;
+    // Ask host to pause, capture, broadcast, then resume
+    state.socket.emit("sync:negotiate", { force: true });
     clearTimeout(state.sync._reqTimer);
     state.sync._reqTimer = setTimeout(() => {
-      if (Date.now() < state.sync._forceUntil) {
-        setSyncBtn("error", "No host signal");
-        toast("Host playback is unavailable");
+      if (state.sync.txActive) {
+        state.sync.txActive = false;
+        setSyncBtn("error", "Timed out");
+        toast("Sync timed out — try again");
       }
-    }, 3500);
+    }, 5500);
+  }
+
+  /** Host-only: pause → capture → broadcast → short settle → resume */
+  function beginHostSyncTransaction() {
+    if (!state.isHost || !state.player || !state.socket) return;
+    if (state.sync.txActive) return;
+    state.sync.txActive = true;
+    setSyncBtn("syncing");
+
+    const wasPlaying = !!state.player.isPlaying();
+    state.sync.hostWasPlaying = wasPlaying;
+    state.applying = true; // block hostEvent loops while we pause
+
+    try {
+      state.player.pause();
+    } catch (_) {}
+
+    // Capture after pause settles
+    const captureAndBroadcast = () => {
+      const time = Number(state.player.getCurrentTime() || 0);
+      state.sync.seq = (state.sync.seq || 0) + 1;
+      const seq = state.sync.seq;
+      state.socket.emit("sync:host", {
+        playing: false, // everyone holds pause at the barrier
+        time,
+        rate: 1,
+        action: "commit",
+        seq,
+      });
+
+      // After clients had time to seek, resume if host was playing
+      clearTimeout(state.sync._txResume);
+      state.sync._txResume = setTimeout(() => {
+        state.applying = false;
+        if (state.sync.hostWasPlaying && state.isHost) {
+          try { state.player.play(); } catch (_) {}
+          state.socket.emit("sync:host", {
+            playing: true,
+            time: Number(state.player.getCurrentTime() || time),
+            rate: 1,
+            action: "play",
+            seq: state.sync.seq,
+          });
+        } else {
+          hostBroadcast("pause");
+        }
+        state.sync.txActive = false;
+        setSyncBtn("synced");
+        toast("Room synced");
+      }, 450);
+    };
+
+    // Brief pause so capture is stable (media seeked/paused)
+    clearTimeout(state.sync._txCapture);
+    state.sync._txCapture = setTimeout(captureAndBroadcast, 120);
+
+    // Safety: never leave host paused forever
+    clearTimeout(state.sync._txSafety);
+    state.sync._txSafety = setTimeout(() => {
+      if (!state.sync.txActive) return;
+      state.applying = false;
+      state.sync.txActive = false;
+      if (state.sync.hostWasPlaying) {
+        try { state.player.play(); } catch (_) {}
+        hostBroadcast("play");
+      }
+      setSyncBtn("error", "Recovered");
+    }, 4000);
+  }
+
+  function onSyncNegotiate() {
+    // Host receives negotiate request from a client
+    if (!state.isHost) return;
+    beginHostSyncTransaction();
   }
 
   function onSync(payload) {
@@ -970,12 +1062,39 @@
     }
 
     const action = payload.action || "tick";
-    const forced = action === "force" || action === "resync" || Date.now() < (state.sync._forceUntil || 0);
+    const seq = Number(payload.seq) || 0;
+    if (seq && state.sync.lastSeq && seq < state.sync.lastSeq) {
+      // Stale transaction — ignore
+      return;
+    }
+    if (seq) state.sync.lastSeq = seq;
+
+    const forced =
+      action === "force" ||
+      action === "resync" ||
+      action === "commit" ||
+      Date.now() < (state.sync._forceUntil || 0);
+
+    // Commit barrier: pause first, then seek
+    if (action === "commit") {
+      state.applying = true;
+      try { state.player.pause(); } catch (_) {}
+      state.sync.targetPlaying = false;
+      applySyncNow("force");
+      clearTimeout(state.sync._reqTimer);
+      state.sync._forceUntil = 0;
+      state.sync.txActive = false;
+      setSyncBtn("synced");
+      setTimeout(() => { state.applying = false; }, 300);
+      return;
+    }
+
     applySyncNow(forced ? "force" : action);
 
     if (forced) {
       clearTimeout(state.sync._reqTimer);
       state.sync._forceUntil = 0;
+      state.sync.txActive = false;
       setSyncBtn("synced");
     }
   }
@@ -1609,27 +1728,46 @@
   }
 
   $("#hostBtn").onclick = () => {
+    if (!state.isHost || !state.room) return;
     const r = state.room;
     showModal(`<h3>Host panel</h3>
-      <label>Room name</label><input id="hpName" value="${esc(r.name)}" />
-      <label style="display:flex;gap:8px;margin-top:8px"><input type="checkbox" id="hpPub" ${r.isPublic ? "checked" : ""}/> Public</label>
-      <label style="display:flex;gap:8px"><input type="checkbox" id="hpLock" ${r.locked ? "checked" : ""}/> Lock</label>
-      <label style="display:flex;gap:8px"><input type="checkbox" id="hpMute" ${r.chatMuted ? "checked" : ""}/> Mute chat</label>
+      <div class="ws-field">
+        <span class="label">Room name</span>
+        <input class="ws-input" id="hpName" value="${esc(r.name || "")}" maxlength="48" autocomplete="off" />
+      </div>
+      <div class="hp-section">Room options</div>
+      <label class="ws-toggle">
+        <span><span class="tog-label">Public</span><span class="tog-hint">Listed in room browser</span></span>
+        <input type="checkbox" id="hpPub" ${r.isPublic ? "checked" : ""} />
+        <span class="track" aria-hidden="true"></span>
+      </label>
+      <label class="ws-toggle">
+        <span><span class="tog-label">Lock</span><span class="tog-hint">Block new joins</span></span>
+        <input type="checkbox" id="hpLock" ${r.locked ? "checked" : ""} />
+        <span class="track" aria-hidden="true"></span>
+      </label>
+      <label class="ws-toggle">
+        <span><span class="tog-label">Mute chat</span><span class="tog-hint">Only host can send messages</span></span>
+        <input type="checkbox" id="hpMute" ${r.chatMuted ? "checked" : ""} />
+        <span class="track" aria-hidden="true"></span>
+      </label>
       <div class="row">
-        <button class="btn-ghost" id="hpClose">Close</button>
-        <button class="btn-primary" id="hpSave" style="margin:0">Save</button>
+        <button type="button" class="btn-ghost" id="hpClose">Close</button>
+        <button type="button" class="btn-primary" id="hpSave">Save</button>
       </div>`);
     $("#hpClose").onclick = hideModal;
     $("#hpSave").onclick = () => {
       state.socket.emit("room:meta", {
-        name: $("#hpName").value,
+        name: $("#hpName").value.trim(),
         isPublic: $("#hpPub").checked,
         locked: $("#hpLock").checked,
         chatMuted: $("#hpMute").checked,
       });
       hideModal();
+      toast("Room settings saved");
     };
   };
+
 
   /* Fix: picking from library while in a room — stay in room */
   const origPick = pickMovie;

@@ -555,6 +555,21 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("sync:negotiate", () => {
+    const code = socket.data.room;
+    const room = rooms.get(code);
+    if (!room) return;
+    // Forward to host only — host runs pause/capture/broadcast/resume
+    for (const [id, sock] of io.of("/").sockets) {
+      if (sock.data && sock.data.room === room.code && sock.data.user && sock.data.user.id === room.hostId) {
+        sock.emit("sync:negotiate", { from: socket.data.user && socket.data.user.id });
+        return;
+      }
+    }
+    // Fallback: soft resync from server state if host socket not found
+    socket.emit("sync:state", { ...rooms.syncPayload(room), action: "force", hostId: room.hostId });
+  });
+
   socket.on("sync:request", (opts) => {
     const code = socket.data.room;
     const room = rooms.get(code);

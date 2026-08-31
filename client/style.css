@@ -3028,3 +3028,55 @@ main, .pages, .page {
 .welcome-row {
   align-items: center;
 }
+
+
+/* Sync to Host — next to Skip intro */
+.sync-to-host {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(157, 92, 255, 0.45);
+  background: rgba(157, 92, 255, 0.18);
+  color: #e9d5ff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+.sync-to-host:hover {
+  background: rgba(157, 92, 255, 0.32);
+  border-color: rgba(192, 132, 252, 0.7);
+}
+.sync-to-host:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+.sync-to-host.is-synced {
+  border-color: rgba(52, 211, 153, 0.5);
+  background: rgba(16, 185, 129, 0.18);
+  color: #a7f3d0;
+}
+.sync-to-host.is-error {
+  border-color: rgba(248, 113, 113, 0.5);
+  background: rgba(239, 68, 68, 0.15);
+  color: #fecaca;
+}
+body.is-host .sync-to-host {
+  /* Host can still force-broadcast; keep visible but softer */
+  opacity: 0.85;
+}
+.player-toolbar .transport {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+@media (max-width: 720px) {
+  .sync-to-host, .skip-intro {
+    font-size: 11px;
+    padding: 5px 10px;
+  }
+}

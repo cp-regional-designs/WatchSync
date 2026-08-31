@@ -730,7 +730,7 @@
     state.room = room;
     state.isHost = isHost;
     if (!isHost && state.socket) {
-      setTimeout(() => state.socket.emit("sync:request"), 500);
+      setTimeout(() => state.socket.emit("sync:request", { force: true }), 400);
     }
     if (state.player && state.player.refreshLock) state.player.refreshLock();
     $("#shell").classList.add("hidden");
@@ -848,40 +848,126 @@
    * - Viewers extrapolate with serverTime latency compensation
    * - Soft seek for small drift, hard reload for large drift
    * ============================================================ */
+  
+  /* HOST-AUTHORITATIVE SYNC — host broadcasts; viewers apply with latency compensation */
   state.sync = state.sync || {
     targetTime: 0,
     targetPlaying: false,
+    targetRate: 1,
     lastServerTime: 0,
     skew: 0,
     lastApply: 0,
+    _baseTarget: 0,
+    _forceUntil: 0,
+    videoKey: null,
   };
+
+  function videoKey(v) {
+    if (!v) return "";
+    return [v.provider || "", v.tmdbId || "", v.src || "", v.season || "", v.episode || ""].join("|");
+  }
+
+  function setSyncBtn(mode, label) {
+    const btn = $("#syncToHost");
+    if (!btn) return;
+    btn.classList.remove("is-synced", "is-error");
+    if (mode === "syncing") {
+      btn.disabled = true;
+      btn.innerHTML = '<i data-lucide="loader-2"></i> Syncing…';
+    } else if (mode === "synced") {
+      btn.disabled = false;
+      btn.classList.add("is-synced");
+      btn.innerHTML = '<i data-lucide="check"></i> ' + (label || "Synced");
+      setTimeout(() => {
+        if (!btn.classList.contains("is-error")) {
+          btn.classList.remove("is-synced");
+          btn.innerHTML = '<i data-lucide="refresh-cw"></i> Sync to Host';
+        }
+      }, 2000);
+    } else if (mode === "error") {
+      btn.disabled = false;
+      btn.classList.add("is-error");
+      btn.innerHTML = '<i data-lucide="alert-circle"></i> ' + (label || "Failed");
+      setTimeout(() => {
+        btn.classList.remove("is-error");
+        btn.innerHTML = '<i data-lucide="refresh-cw"></i> Sync to Host';
+      }, 2500);
+    } else {
+      btn.disabled = false;
+      btn.innerHTML = '<i data-lucide="refresh-cw"></i> Sync to Host';
+    }
+    try { if (window.lucide) lucide.createIcons(); } catch (_) {}
+  }
+
+  function requestHostSync(force) {
+    if (!state.socket || !state.room) {
+      setSyncBtn("error", "No room");
+      toast("Not connected to a room");
+      return;
+    }
+    if (state.isHost) {
+      hostBroadcast("force");
+      setSyncBtn("synced", "Broadcast");
+      toast("Sent current position to room");
+      return;
+    }
+    setSyncBtn("syncing");
+    state.sync._forceUntil = Date.now() + 4000;
+    state.socket.emit("sync:request", { force: !!force });
+    clearTimeout(state.sync._reqTimer);
+    state.sync._reqTimer = setTimeout(() => {
+      if (Date.now() < state.sync._forceUntil) {
+        setSyncBtn("error", "No host signal");
+        toast("Host playback is unavailable");
+      }
+    }, 3500);
+  }
 
   function onSync(payload) {
     if (!payload) return;
-    state.lastSync = Date.now();
+    const recvAt = Date.now();
+    state.lastSync = recvAt;
     $("#syncDot")?.classList.remove("red");
+    setSyncConnection("ok");
 
-    if (state.isHost) {
-      setSyncConnection("ok");
-      return;
-    }
+    if (state.isHost) return;
     if (!state.player) return;
 
-    const serverTime = Number(payload.serverTime) || Date.now();
-    // Latency compensation: advance playing timeline by RTT/2 estimate
-    const rtt = Math.max(0, (Date.now() - serverTime) / 1000);
+    const serverTime = Number(payload.serverTime) || recvAt;
+    const offsetMs = recvAt - serverTime;
     const rate = Number(payload.rate) || 1;
     let target = Number(payload.time) || 0;
+
     if (payload.playing) {
-      target += rtt * rate * 0.5; // half-RTT lead
+      const oneWay = Math.max(0, Math.min(1.5, offsetMs / 1000));
+      target += oneWay * rate;
     }
 
     state.sync.targetTime = target;
     state.sync._baseTarget = target;
     state.sync.targetPlaying = !!payload.playing;
+    state.sync.targetRate = rate;
     state.sync.lastServerTime = serverTime;
+    state.sync.skew = offsetMs;
 
-    applySyncNow(payload.action || "tick");
+    if (payload.video) {
+      const want = videoKey(payload.video);
+      const have = videoKey(state.player.current && state.player.current());
+      if (want && want !== have) {
+        state.player.load(payload.video, target);
+        state.sync.videoKey = want;
+      }
+    }
+
+    const action = payload.action || "tick";
+    const forced = action === "force" || action === "resync" || Date.now() < (state.sync._forceUntil || 0);
+    applySyncNow(forced ? "force" : action);
+
+    if (forced) {
+      clearTimeout(state.sync._reqTimer);
+      state.sync._forceUntil = 0;
+      setSyncBtn("synced");
+    }
   }
 
   function applySyncNow(action) {
@@ -889,97 +975,77 @@
     const target = state.sync.targetTime;
     const shouldPlay = state.sync.targetPlaying;
     const local = Number(state.player.getCurrentTime() || 0);
-    const drift = local - target;
-    const abs = Math.abs(drift);
-    const now = Date.now();
+    const abs = Math.abs(local - target);
+    const nowMs = Date.now();
     const cur = state.player.current && state.player.current();
-    const isVidking = !cur || cur.provider === "vidking" || (!cur.provider && cur.tmdbId);
-    const isHtml5 = cur && cur.provider === "html5";
+    const isVidking = !!(cur && (cur.provider === "vidking" || (!cur.provider && cur.tmdbId)));
+    const isHtml5 = !!(cur && cur.provider === "html5");
 
-    // Vidking seek = iframe reload → use wider thresholds + longer cooldown
-    const softThresh = isHtml5 ? 0.35 : isVidking ? 2.5 : 0.8;
-    const hardThresh = isHtml5 ? 1.5 : isVidking ? 6.0 : 3.0;
-    const minGap = action === "tick" ? (isVidking ? 2000 : 400) : 0;
-    if (now - state.sync.lastApply < minGap && action === "tick" && abs < hardThresh) {
-      // Still fix play/pause without seeking
-      try {
-        if (shouldPlay && !state.player.isPlaying()) state.player.play();
-        if (!shouldPlay && state.player.isPlaying()) state.player.pause();
-      } catch (_) {}
-      setSyncDot(abs);
-      return;
-    }
+    const softThresh = isHtml5 ? 0.4 : isVidking ? 2.0 : 0.8;
+    const hardThresh = isHtml5 ? 1.25 : isVidking ? 4.0 : 2.5;
+    const isForce = action === "force" || action === "resync" || action === "load";
+    const isControl = action === "play" || action === "pause" || action === "seek" || action === "skip";
 
-    state.applying = true;
-    state.sync.lastApply = now;
-
-    try {
-      if (action === "play" || action === "pause" || action === "seek" || action === "resync" || action === "load") {
-        if (abs > softThresh) state.player.seek(target);
-        if (shouldPlay) state.player.play();
-        else state.player.pause();
+    if (!isForce && action === "tick") {
+      const minGap = isVidking ? 1800 : 350;
+      if (nowMs - state.sync.lastApply < minGap && abs < hardThresh) {
+        try {
+          if (shouldPlay && !state.player.isPlaying()) state.player.play();
+          if (!shouldPlay && state.player.isPlaying()) state.player.pause();
+        } catch (_) {}
         setSyncDot(abs);
         return;
       }
-
-      if (abs > hardThresh) {
-        state.player.seek(target);
-        if (shouldPlay) state.player.play();
-        else state.player.pause();
-        setSyncDot(abs);
-      } else if (abs > softThresh) {
-        state.player.seek(target);
-        if (shouldPlay) state.player.play();
-        else state.player.pause();
-        setSyncDot(abs);
-      } else {
-        if (shouldPlay && !state.player.isPlaying()) state.player.play();
-        if (!shouldPlay && state.player.isPlaying()) state.player.pause();
-        setSyncDot(abs);
-      }
-    } catch (err) {
-      console.warn("sync apply", err);
-    } finally {
-      setTimeout(() => {
-        state.applying = false;
-      }, isVidking ? 800 : 300);
     }
+
+    state.applying = true;
+    state.sync.lastApply = nowMs;
+
+    try {
+      if (isForce || isControl || abs > softThresh) {
+        if (isVidking && (isForce || abs > softThresh)) {
+          if (typeof state.player.reloadAt === "function") state.player.reloadAt(target);
+          else state.player.seek(target);
+        } else {
+          state.player.seek(target);
+        }
+      }
+      if (shouldPlay) state.player.play();
+      else state.player.pause();
+    } catch (err) {
+      console.warn("[sync] apply failed", err);
+      setSyncBtn("error", "Seek failed");
+    }
+
+    setSyncDot(abs);
+    setTimeout(() => { state.applying = false; }, isVidking ? 800 : 200);
   }
 
   function setSyncDot(absDrift) {
     const d = $("#syncDot");
-    const label = $("#syncLabel");
     if (!d) return;
-    d.classList.remove("red", "yellow", "green");
-    if (absDrift > 2.5) {
-      d.classList.add("yellow");
-      if (label) label.textContent = "Syncing";
-    } else {
-      d.classList.add("green");
-      if (label) label.textContent = "Synced";
-    }
+    d.classList.remove("green", "yellow", "red");
+    if (absDrift < 0.75) d.classList.add("green");
+    else if (absDrift < 2.5) d.classList.add("yellow");
+    else d.classList.add("red");
   }
 
   function setSyncConnection(kind) {
     const d = $("#syncDot");
-    const label = $("#syncLabel");
     if (!d) return;
-    d.classList.remove("red", "yellow", "green");
-    if (kind === "lost") {
-      d.classList.add("red");
-      if (label) label.textContent = "Offline";
-    } else if (kind === "reconnect") {
-      d.classList.add("yellow");
-      if (label) label.textContent = "Reconnecting";
-    } else {
-      d.classList.add("green");
-      if (label) label.textContent = "Synced";
-    }
+    if (kind === "ok") d.classList.remove("red");
+  }
+
+  function fmt(t) {
+    t = Math.max(0, Math.floor(Number(t) || 0));
+    const m = Math.floor(t / 60);
+    const s = t % 60;
+    return m + ":" + String(s).padStart(2, "0");
   }
 
   function hostBroadcast(action) {
-    if (!state.isHost || !state.player || !state.room || !state.socket) return;
-    if (state.applying) return;
+    if (!state.isHost || !state.socket || !state.player) return;
+    if (state.applying && action === "tick") return;
     const time = Number(state.player.getCurrentTime() || 0);
     const playing = !!state.player.isPlaying();
     state.socket.emit("sync:host", {
@@ -994,36 +1060,38 @@
 
   function hostEvent(ev) {
     if (!state.isHost || state.applying) return;
-    // Apply local state then broadcast immediately
-    hostBroadcast(ev.type || "tick");
+    const type = (ev && ev.type) || "tick";
+    const action =
+      type === "play" ? "play" :
+      type === "pause" ? "pause" :
+      type === "seek" ? "seek" :
+      type === "time" ? "tick" : type;
+    hostBroadcast(action);
   }
 
-  // Host: fast heartbeat (1s)
   setInterval(() => {
     if (!state.isHost) return;
     hostBroadcast("tick");
   }, 1000);
 
-  // Viewers: chase host timeline between packets (extrapolate + soft correct)
   setInterval(() => {
     if (state.isHost || !state.player || !state.room) return;
     if (!state.sync.lastServerTime) return;
     if (state.sync.targetPlaying) {
       const elapsed = (Date.now() - state.lastSync) / 1000;
-      if (elapsed > 0.2 && elapsed < 5) {
-        // Real-time advance from last authoritative packet
+      if (elapsed > 0.15 && elapsed < 6) {
         const base = state.sync._baseTarget != null ? state.sync._baseTarget : state.sync.targetTime;
-        state.sync.targetTime = base + elapsed;
+        const rate = state.sync.targetRate || 1;
+        state.sync.targetTime = base + elapsed * rate;
       }
     }
     applySyncNow("tick");
   }, 500);
 
-  // Viewers: request full resync if packets go quiet
   setInterval(() => {
     if (state.isHost || !state.room || !state.socket) return;
     if (Date.now() - (state.lastSync || 0) > 4000) {
-      state.socket.emit("sync:request");
+      state.socket.emit("sync:request", { force: false });
       $("#syncDot")?.classList.add("red");
     }
   }, 3000);
@@ -1357,10 +1425,17 @@
     hostEvent({ type: "seek", time: t });
   };
   $("#skipIntro").onclick = () => {
-    const t = state.player.getCurrentTime() + 90;
-      state.player.seek(t);
-    hostEvent({ type: "seek", time: t });
+    if (!state.isHost || !state.player) return toast("Host only");
+    const t = Number(state.player.getCurrentTime() || 0) + 90;
+    state.player.seek(t);
+    hostBroadcast("skip");
+    toast("Skipped ~90s");
   };
+
+  $("#syncToHost").onclick = () => {
+    requestHostSync(true);
+  };
+
   $$("[data-react]").forEach((b) => (b.onclick = () => {
     if (state.socket && state.socket.connected) state.socket.emit("react", b.dataset.react);
   }));
@@ -1436,15 +1511,15 @@
       e.target.value = "";
       return;
     }
-    if (f.size > 1024 * 1024 * 1024) {
-      toast("This video is too large. Maximum size is 1 GB.");
+    if (f.size > 10 * 1024 * 1024 * 1024) {
+      toast("This video is too large. Maximum size is 10 GB.");
       e.target.value = "";
       return;
     }
     const fd = new FormData();
     fd.append("video", f);
     $("#uploadProg").classList.remove("hidden");
-    $("#uploadProg").textContent = "Uploading " + (f.size / (1024 * 1024)).toFixed(1) + " MB…";
+    $("#uploadProg").textContent = "Uploading " + (f.size > 1024*1024*1024 ? (f.size/(1024*1024*1024)).toFixed(2) + " GB" : (f.size/(1024*1024)).toFixed(1) + " MB") + "…";
     try {
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       const data = await res.json().catch(() => ({}));

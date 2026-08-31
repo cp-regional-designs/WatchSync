@@ -4,14 +4,20 @@
     let onEvent = () => {};
     let hostMode = false;
 
+    let pendingSeek = null;
     function load(meta, startAt = 0) {
       destroy();
+      pendingSeek = null;
       video = document.createElement("video");
       video.className = "player-frame html5-video";
-      video.controls = true;
+      video.controls = false; // host toolbar is authoritative
       video.playsInline = true;
       video.src = meta.src;
-      video.currentTime = startAt || 0;
+      const st = startAt || 0;
+      if (st > 0) pendingSeek = st;
+      video.addEventListener("loadedmetadata", () => {
+        if (pendingSeek != null && video) { try { video.currentTime = pendingSeek; } catch(_){} pendingSeek = null; }
+      }, { once: true });
       video.addEventListener("play", () => hostMode && onEvent({ type: "play", time: video.currentTime }));
       video.addEventListener("pause", () => hostMode && onEvent({ type: "pause", time: video.currentTime }));
       video.addEventListener("seeked", () => hostMode && onEvent({ type: "seek", time: video.currentTime }));
@@ -42,7 +48,13 @@
         video?.pause();
       },
       seek(t) {
-        if (video) video.currentTime = t;
+        const n = Math.max(0, Number(t) || 0);
+        if (!video) return;
+        if (video.readyState >= 1) {
+          try { video.currentTime = n; } catch (_) { pendingSeek = n; }
+        } else {
+          pendingSeek = n;
+        }
       },
       getCurrentTime() {
         return video?.currentTime || 0;

@@ -111,7 +111,7 @@ fs.mkdirSync(chatImgDir, { recursive: true });
 /** Allowed video containers — extension is authoritative; MIME is secondary (browsers lie about MKV). */
 const VIDEO_EXTS = new Set([".mp4", ".webm", ".mkv", ".mov", ".m4v"]);
 const VIDEO_MIME_OK = /^(video\/(mp4|webm|quicktime|x-matroska|matroska|mpeg|x-m4v)|application\/(octet-stream|x-matroska))$/i;
-const VIDEO_MAX_BYTES = 1024 * 1024 * 1024; // 1 GB
+const VIDEO_MAX_BYTES = 10 * 1024 * 1024 * 1024; // 10 GB
 
 function isAllowedVideoFile(file) {
   const name = String(file?.originalname || "");
@@ -282,7 +282,7 @@ app.post("/api/upload", (req, res) => {
     if (err) {
       const msg =
         err.code === "LIMIT_FILE_SIZE"
-          ? "This video is too large. Maximum size is 1 GB."
+          ? "This video is too large. Maximum size is 10 GB."
           : err.message || "Upload failed";
       return res.status(400).json({ error: msg });
     }
@@ -540,24 +540,30 @@ io.on("connection", (socket) => {
       time: Number(state?.time) || 0,
       rate: Number(state?.rate) || 1,
     });
-    // Broadcast authoritative state to everyone except the host
+    const action = state?.action || "tick";
     const msg = {
       ...payload,
-      action: state?.action || "tick",
+      action,
       hostId: socket.data.user?.id,
     };
-    socket.to(room.code).emit("sync:state", msg);
-    // Urgent actions also echo for late-join buffers
-    if (state?.action && state.action !== "tick") {
+    // Host is authority: always broadcast to others.
+    // Non-tick actions (play/pause/seek/skip/force) go to entire room so late joiners catch up.
+    if (action === "tick") {
+      socket.to(room.code).emit("sync:state", msg);
+    } else {
       io.to(room.code).emit("sync:state", msg);
     }
   });
 
-  socket.on("sync:request", () => {
+  socket.on("sync:request", (opts) => {
     const code = socket.data.room;
     const room = rooms.get(code);
     if (!room) return;
-    socket.emit("sync:state", { ...rooms.syncPayload(room), action: "resync" });
+    const force = !!(opts && opts.force);
+    const action = force ? "force" : "resync";
+    // Live extrapolated time from server room state (host authority)
+    const payload = rooms.syncPayload(room);
+    socket.emit("sync:state", { ...payload, action, hostId: room.hostId });
     if (room.video) socket.emit("video:load", room.video);
   });
 

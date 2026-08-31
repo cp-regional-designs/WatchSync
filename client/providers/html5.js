@@ -19,6 +19,16 @@
         if (hostMode) onEvent({ type: "time", time: video.currentTime, playing: !video.paused });
       });
       video.addEventListener("canplay", () => onEvent({ type: "ready" }));
+      video.addEventListener("error", () => {
+        const code = video.error && video.error.code;
+        onEvent({
+          type: "error",
+          message:
+            "This browser could not play the file (code " +
+            (code || "?") +
+            "). MKV/HEVC often needs Chrome or an MP4 (H.264) copy.",
+        });
+      });
       container.appendChild(video);
       video.play().catch(() => {});
     }

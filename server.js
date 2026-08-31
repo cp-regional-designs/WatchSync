@@ -108,18 +108,35 @@ fs.mkdirSync(uploadDir, { recursive: true });
 fs.mkdirSync(avatarDir, { recursive: true });
 fs.mkdirSync(chatImgDir, { recursive: true });
 
+/** Allowed video containers — extension is authoritative; MIME is secondary (browsers lie about MKV). */
+const VIDEO_EXTS = new Set([".mp4", ".webm", ".mkv", ".mov", ".m4v"]);
+const VIDEO_MIME_OK = /^(video\/(mp4|webm|quicktime|x-matroska|matroska|mpeg|x-m4v)|application\/(octet-stream|x-matroska))$/i;
+const VIDEO_MAX_BYTES = 1024 * 1024 * 1024; // 1 GB
+
+function isAllowedVideoFile(file) {
+  const name = String(file?.originalname || "");
+  const ext = path.extname(name).toLowerCase();
+  const mime = String(file?.mimetype || "").toLowerCase();
+  if (VIDEO_EXTS.has(ext)) return true;
+  // Some OSes send empty/odd MIME for MKV — still allow if extension matched above
+  if (VIDEO_MIME_OK.test(mime) && (ext === "" || VIDEO_EXTS.has(ext))) return true;
+  return false;
+}
+
 const videoUpload = multer({
   storage: multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, uploadDir),
     filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname || "").toLowerCase() || ".mp4";
+      let ext = path.extname(file.originalname || "").toLowerCase();
+      if (!VIDEO_EXTS.has(ext)) ext = ".mp4";
+      // Never trust user path segments — only random name + safe ext
       cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`);
     },
   }),
-  limits: { fileSize: 500 * 1024 * 1024 },
+  limits: { fileSize: VIDEO_MAX_BYTES },
   fileFilter: (_req, file, cb) => {
-    const ok = /\.(mp4|webm)$/i.test(file.originalname || "") || /video\/(mp4|webm)/.test(file.mimetype);
-    cb(ok ? null : new Error("Only MP4 / WebM allowed"), ok);
+    if (isAllowedVideoFile(file)) return cb(null, true);
+    cb(new Error("Unsupported video format. Use MP4, WebM, MKV, or MOV."));
   },
 });
 
@@ -162,7 +179,20 @@ app.post("/api/upload/avatar", avatarImageUpload.single("avatar"), (req, res) =>
   res.json({ ok: true, url });
 });
 
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "uploads"), {
+    setHeaders(res, filePath) {
+      const ext = path.extname(filePath).toLowerCase();
+      if (ext === ".mkv") res.setHeader("Content-Type", "video/x-matroska");
+      if (ext === ".mov") res.setHeader("Content-Type", "video/quicktime");
+      if (ext === ".mp4") res.setHeader("Content-Type", "video/mp4");
+      if (ext === ".webm") res.setHeader("Content-Type", "video/webm");
+      // Allow range requests for seeking in rooms
+      res.setHeader("Accept-Ranges", "bytes");
+    },
+  })
+);
 app.use(express.static(path.join(__dirname, "client")));
 
 app.get("/api/health", (_req, res) => {
@@ -247,12 +277,34 @@ app.get("/api/tmdb/category", async (req, res) => {
   }
 });
 
-app.post("/api/upload", videoUpload.single("video"), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: "No file" });
-  res.json({
-    url: `/uploads/videos/${req.file.filename}`,
-    name: req.file.originalname,
-    size: req.file.size,
+app.post("/api/upload", (req, res) => {
+  videoUpload.single("video")(req, res, (err) => {
+    if (err) {
+      const msg =
+        err.code === "LIMIT_FILE_SIZE"
+          ? "This video is too large. Maximum size is 1 GB."
+          : err.message || "Upload failed";
+      return res.status(400).json({ error: msg });
+    }
+    if (!req.file) return res.status(400).json({ error: "No file" });
+    const ext = path.extname(req.file.filename).toLowerCase();
+    const mimeByExt = {
+      ".mp4": "video/mp4",
+      ".webm": "video/webm",
+      ".mkv": "video/x-matroska",
+      ".mov": "video/quicktime",
+      ".m4v": "video/x-m4v",
+    };
+    res.json({
+      ok: true,
+      url: `/uploads/videos/${req.file.filename}`,
+      name: req.file.originalname,
+      size: req.file.size,
+      ext,
+      contentType: mimeByExt[ext] || req.file.mimetype || "application/octet-stream",
+      // Browser may not play MKV natively — client shows a note; file is still stored
+      mayNeedCompatiblePlayer: ext === ".mkv",
+    });
   });
 });
 

@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@500;700&family=Dancing+Script:wght@500;600&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;600&family=Nunito:wght@600;700;800&family=Outfit:wght@400;500;600;700;800&family=Pacifico&family=Plus+Jakarta+Sans:wght@500;600;700&family=Poppins:wght@400;600;700;800&family=Press+Start+2P&family=Quicksand:wght@500;600;700&family=Rubik:wght@500;600;700&family=Space+Grotesk:wght@500;600;700&family=VT323&display=swap" rel="stylesheet">
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="stylesheet" href="/style.css?v=pfpFit1" />
+  <link rel="stylesheet" href="/style.css?v=mkv1" />
 </head>
 <body>
   <div id="app">
@@ -270,12 +270,12 @@
               <i data-lucide="clapperboard"></i> Library
             </button>
             <div class="url-row">
-              <input id="urlInput" placeholder="YouTube or MP4 URL" autocomplete="off" />
+              <input id="urlInput" placeholder="YouTube / MP4 / WebM / MKV URL" autocomplete="off" />
               <button type="button" id="loadUrl" class="btn-primary sm">Load</button>
             </div>
             <label class="file-btn sm media-upload">
               <i data-lucide="upload"></i> Upload
-              <input id="fileInput" type="file" accept="video/mp4,video/webm" hidden />
+              <input id="fileInput" type="file" accept="video/mp4,video/webm,video/x-matroska,video/quicktime,.mp4,.webm,.mkv,.mov,.m4v" hidden />
             </label>
             <div id="uploadProg" class="upload-prog hidden"></div>
           </div>
@@ -384,17 +384,17 @@
     }
   });
   </script>
-  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js?v=pfpFit1"></script>
-  <script src="/socket.io/socket.io.js?v=pfpFit1"></script>
-  <script src="/config.js?v=pfpFit1"></script>
-  <script src="/providers/vidking.js?v=pfpFit1"></script>
-  <script src="/providers/youtube.js?v=pfpFit1"></script>
-  <script src="/providers/html5.js?v=pfpFit1"></script>
-  <script src="/components/player.js?v=pfpFit1"></script>
-  <script src="/components/movies.js?v=pfpFit1"></script>
-  <script src="/components/cosmetics.js?v=pfpFit1"></script>
-  <script src="/components/voice.js?v=pfpFit1"></script>
-  <script src="/app.js?v=pfpFit1"></script>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js?v=mkv1"></script>
+  <script src="/socket.io/socket.io.js?v=mkv1"></script>
+  <script src="/config.js?v=mkv1"></script>
+  <script src="/providers/vidking.js?v=mkv1"></script>
+  <script src="/providers/youtube.js?v=mkv1"></script>
+  <script src="/providers/html5.js?v=mkv1"></script>
+  <script src="/components/player.js?v=mkv1"></script>
+  <script src="/components/movies.js?v=mkv1"></script>
+  <script src="/components/cosmetics.js?v=mkv1"></script>
+  <script src="/components/voice.js?v=mkv1"></script>
+  <script src="/app.js?v=mkv1"></script>
 </body>
 </html>
 

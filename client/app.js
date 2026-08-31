@@ -1426,21 +1426,52 @@
     else loadVideo({ provider: "html5", src, title: "Video" }, 0, true);
   };
   $("#fileInput").onchange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const f = e.target.files?.[0];
+    if (!f || !state.isHost) return;
+    const name = String(f.name || "");
+    const ext = (name.match(/\.([a-z0-9]+)$/i) || ["", ""])[1].toLowerCase();
+    const allowed = ["mp4", "webm", "mkv", "mov", "m4v"];
+    if (!allowed.includes(ext)) {
+      toast("Unsupported video format. Use MP4, WebM, MKV, or MOV.");
+      e.target.value = "";
+      return;
+    }
+    if (f.size > 1024 * 1024 * 1024) {
+      toast("This video is too large. Maximum size is 1 GB.");
+      e.target.value = "";
+      return;
+    }
     const fd = new FormData();
-    fd.append("video", file);
+    fd.append("video", f);
     $("#uploadProg").classList.remove("hidden");
-    $("#uploadProg").textContent = "Uploading…";
+    $("#uploadProg").textContent = "Uploading " + (f.size / (1024 * 1024)).toFixed(1) + " MB…";
     try {
       const res = await fetch("/api/upload", { method: "POST", body: fd });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      loadVideo({ provider: "html5", src: data.url, title: data.name }, 0, true);
-      $("#uploadProg").textContent = "Uploaded";
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.url) throw new Error(data.error || "Upload failed");
+      loadVideo(
+        {
+          provider: "html5",
+          src: data.url,
+          title: data.name || name,
+          ext: data.ext || ("." + ext),
+          mayNeedCompatiblePlayer: !!(data.mayNeedCompatiblePlayer || ext === "mkv"),
+        },
+        0,
+        true
+      );
+      $("#uploadProg").textContent =
+        ext === "mkv"
+          ? "Uploaded (MKV — playback depends on browser/codecs)"
+          : "Uploaded";
+      if (ext === "mkv") {
+        toast("MKV uploaded. If it will not play, convert to MP4 (H.264) for wider browser support.");
+      }
     } catch (err) {
       toast(err.message || "Upload failed");
+      $("#uploadProg").textContent = "Failed";
     }
+    e.target.value = "";
   };
 
   async function openRoomLibrary() {

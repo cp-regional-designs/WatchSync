@@ -259,6 +259,50 @@ app.get("/api/tmdb/search", async (req, res) => {
   }
 });
 
+
+app.get("/api/tmdb/tv/:id", async (req, res) => {
+  try {
+    const id = String(req.params.id || "").replace(/\D/g, "");
+    if (!id) return res.status(400).json({ error: "Missing id" });
+    const data = await tmdb(`/tv/${id}`);
+    const seasons = (data.seasons || [])
+      .filter((s) => s.season_number > 0)
+      .map((s) => ({
+        season: s.season_number,
+        name: s.name,
+        episodeCount: s.episode_count || 0,
+        poster: s.poster_path ? `https://image.tmdb.org/t/p/w200${s.poster_path}` : "",
+      }));
+    res.json({
+      id: data.id,
+      title: data.name || data.original_name || "TV Show",
+      seasons,
+      numberOfSeasons: data.number_of_seasons || seasons.length,
+    });
+  } catch (err) {
+    res.status(502).json({ error: err.message, seasons: [] });
+  }
+});
+
+app.get("/api/tmdb/tv/:id/season/:season", async (req, res) => {
+  try {
+    const id = String(req.params.id || "").replace(/\D/g, "");
+    const season = Number(req.params.season) || 1;
+    if (!id) return res.status(400).json({ error: "Missing id" });
+    const data = await tmdb(`/tv/${id}/season/${season}`);
+    const episodes = (data.episodes || []).map((e) => ({
+      episode: e.episode_number,
+      name: e.name || `Episode ${e.episode_number}`,
+      overview: e.overview || "",
+      runtime: e.runtime || null,
+      still: e.still_path ? `https://image.tmdb.org/t/p/w300${e.still_path}` : "",
+    }));
+    res.json({ season, episodes, name: data.name || `Season ${season}` });
+  } catch (err) {
+    res.status(502).json({ error: err.message, episodes: [] });
+  }
+});
+
 app.get("/api/tmdb/category", async (req, res) => {
   try {
     const cat = req.query.cat || "trending";
@@ -535,52 +579,150 @@ io.on("connection", (socket) => {
   socket.on("sync:host", (state) => {
     const room = hostRoom(socket);
     if (!room) return;
+    if (
+      room.syncSession &&
+      room.syncSession.phase &&
+      room.syncSession.phase !== "done" &&
+      (state?.action || "tick") === "tick"
+    ) {
+      return;
+    }
     const payload = rooms.setPlayback(room.code, {
       playing: !!state?.playing,
       time: Number(state?.time) || 0,
       rate: Number(state?.rate) || 1,
     });
     const action = state?.action || "tick";
-    const msg = {
-      ...payload,
-      action,
-      hostId: socket.data.user?.id,
-    };
-    // Host is authority: always broadcast to others.
-    // Non-tick actions (play/pause/seek/skip/force) go to entire room so late joiners catch up.
-    if (action === "tick") {
-      socket.to(room.code).emit("sync:state", msg);
-    } else {
-      io.to(room.code).emit("sync:state", msg);
-    }
+    const msg = { ...payload, action, hostId: socket.data.user?.id, seq: state?.seq || 0 };
+    if (action === "tick") socket.to(room.code).emit("sync:state", msg);
+    else io.to(room.code).emit("sync:state", msg);
   });
 
-  socket.on("sync:negotiate", () => {
+  const SYNC_GO_DELAY_MS = 650;
+  const SYNC_TIMEOUT_MS = 5000;
+
+  function clearSyncSession(room) {
+    if (!room) return;
+    if (room.syncSession && room.syncSession.timer) clearTimeout(room.syncSession.timer);
+    room.syncSession = null;
+  }
+
+  function finishSyncGo(room, code) {
+    if (!room || !room.syncSession) return;
+    const sess = room.syncSession;
+    if (sess.phase === "done") return;
+    sess.phase = "done";
+    const serverNow = Date.now();
+    const playAt = serverNow + SYNC_GO_DELAY_MS;
+    const wasPlaying = !!sess.wasPlaying;
+    rooms.setPlayback(code, { playing: false, time: sess.targetTime, rate: 1 });
+    io.to(code).emit("sync:go", {
+      syncId: sess.id,
+      targetTime: sess.targetTime,
+      wasPlaying,
+      playAt,
+      serverTime: serverNow,
+      readyCount: sess.ready.size,
+      total: Math.max(1, room.users.size),
+    });
+    setTimeout(() => {
+      if (room.syncSession && room.syncSession.id === sess.id) {
+        rooms.setPlayback(code, { playing: wasPlaying, time: sess.targetTime, rate: 1 });
+        clearSyncSession(room);
+      }
+    }, SYNC_GO_DELAY_MS + 80);
+  }
+
+  socket.on("sync:request", () => {
     const code = socket.data.room;
     const room = rooms.get(code);
-    if (!room) return;
-    // Forward to host only — host runs pause/capture/broadcast/resume
-    for (const [id, sock] of io.of("/").sockets) {
-      if (sock.data && sock.data.room === room.code && sock.data.user && sock.data.user.id === room.hostId) {
-        sock.emit("sync:negotiate", { from: socket.data.user && socket.data.user.id });
-        return;
+    const user = socket.data.user;
+    if (!room || !user) return;
+    if (room.syncSession && room.syncSession.phase && room.syncSession.phase !== "done") {
+      socket.emit("sync:status", {
+        phase: room.syncSession.phase,
+        syncId: room.syncSession.id,
+        readyCount: room.syncSession.ready.size,
+        total: room.users.size,
+      });
+      return;
+    }
+    const syncId = Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+    room.syncSession = {
+      id: syncId,
+      phase: "freezing",
+      targetTime: rooms.liveTime(room),
+      wasPlaying: !!room.playback.playing,
+      ready: new Set(),
+      requestedBy: user.id,
+      timer: null,
+    };
+    io.to(code).emit("sync:status", { phase: "freezing", syncId, readyCount: 0, total: room.users.size });
+    let hostFound = false;
+    for (const [, sock] of io.of("/").sockets) {
+      if (sock.data && sock.data.room === code && sock.data.user && sock.data.user.id === room.hostId) {
+        hostFound = true;
+        sock.emit("sync:freeze", { syncId, from: user.id, estimatedTime: room.syncSession.targetTime });
+        break;
       }
     }
-    // Fallback: soft resync from server state if host socket not found
-    socket.emit("sync:state", { ...rooms.syncPayload(room), action: "force", hostId: room.hostId });
+    room.syncSession.timer = setTimeout(() => {
+      if (!room.syncSession || room.syncSession.id !== syncId) return;
+      if (room.syncSession.phase === "done") return;
+      finishSyncGo(room, code);
+      io.to(code).emit("sync:status", { phase: "timeout", syncId });
+    }, SYNC_TIMEOUT_MS);
+    if (!hostFound) {
+      const targetTime = rooms.liveTime(room);
+      room.syncSession.targetTime = targetTime;
+      room.syncSession.phase = "waiting";
+      rooms.setPlayback(code, { playing: false, time: targetTime, rate: 1 });
+      io.to(code).emit("sync:prepare", {
+        syncId, targetTime, wasPlaying: room.syncSession.wasPlaying,
+        serverTime: Date.now(), video: room.video,
+      });
+    }
   });
 
-  socket.on("sync:request", (opts) => {
+  socket.on("sync:snapshot", (data) => {
     const code = socket.data.room;
     const room = rooms.get(code);
-    if (!room) return;
-    const force = !!(opts && opts.force);
-    const action = force ? "force" : "resync";
-    // Live extrapolated time from server room state (host authority)
-    const payload = rooms.syncPayload(room);
-    socket.emit("sync:state", { ...payload, action, hostId: room.hostId });
-    if (room.video) socket.emit("video:load", room.video);
+    if (!room || !room.syncSession) return;
+    if (!rooms.isHost(code, socket.data.user && socket.data.user.id)) return;
+    const sess = room.syncSession;
+    if (data && data.syncId && data.syncId !== sess.id) return;
+    if (sess.phase !== "freezing" && sess.phase !== "preparing") return;
+    const targetTime = Math.max(0, Number(data && data.time) || sess.targetTime || 0);
+    sess.targetTime = targetTime;
+    if (data && data.wasPlaying !== undefined) sess.wasPlaying = !!data.wasPlaying;
+    sess.phase = "waiting";
+    rooms.setPlayback(code, { playing: false, time: targetTime, rate: 1 });
+    io.to(code).emit("sync:prepare", {
+      syncId: sess.id, targetTime, wasPlaying: sess.wasPlaying,
+      serverTime: Date.now(), video: room.video,
+    });
+    io.to(code).emit("sync:status", {
+      phase: "waiting", syncId: sess.id, readyCount: sess.ready.size, total: room.users.size,
+    });
   });
+
+  socket.on("sync:ready", (data) => {
+    const code = socket.data.room;
+    const room = rooms.get(code);
+    const user = socket.data.user;
+    if (!room || !room.syncSession || !user) return;
+    const sess = room.syncSession;
+    if (data && data.syncId && data.syncId !== sess.id) return;
+    if (sess.phase !== "waiting") return;
+    sess.ready.add(user.id);
+    io.to(code).emit("sync:status", {
+      phase: "waiting", syncId: sess.id, readyCount: sess.ready.size, total: room.users.size,
+    });
+    const socketsInRoom = [...io.of("/").sockets.values()].filter((s) => s.data && s.data.room === code);
+    if (sess.ready.size >= Math.max(1, socketsInRoom.length)) finishSyncGo(room, code);
+  });
+
+  socket.on("sync:negotiate", () => {});
 
   socket.on("chat:send", (msg, cb) => {
     const code = socket.data.room;

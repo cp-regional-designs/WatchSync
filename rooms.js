@@ -42,6 +42,7 @@ class RoomManager {
       users: new Map(),
       video: null,
       playback: { playing: false, time: 0, updatedAt: now(), rate: 1 },
+      syncSession: null,
       queue: [],
     };
     room.users.set(host.id, { ...host, isHost: true, joinedAt: now() });

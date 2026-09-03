@@ -224,6 +224,10 @@
     socket.on("video:load", (video) => loadVideo(video, 0, false));
     socket.on("sync:state", onSync);
     socket.on("sync:negotiate", onSyncNegotiate);
+    socket.on("sync:freeze", onSyncFreeze);
+    socket.on("sync:prepare", onSyncPrepare);
+    socket.on("sync:go", onSyncGo);
+    socket.on("sync:status", onSyncStatus);
     socket.on("chat:message", addMessage);
     socket.on("chat:system", (m) => addSystem(m.text));
     socket.on("chat:typing", (t) => {
@@ -894,7 +898,7 @@
     btn.classList.remove("is-synced", "is-error");
     if (mode === "syncing") {
       btn.disabled = true;
-      btn.innerHTML = '<i data-lucide="loader-2"></i> Syncing…';
+      btn.innerHTML = '<i data-lucide="loader-2"></i> ' + (label || "Syncing…");
     } else if (mode === "synced") {
       btn.disabled = false;
       btn.classList.add("is-synced");
@@ -924,106 +928,179 @@
   state.sync.txActive = false;
   state.sync.hostWasPlaying = false;
 
+  state.sync.barrierActive = false;
+  state.sync.barrierId = null;
+  state.sync.barrierDone = false;
+  state.sync.lastBarrierId = null;
+
   function requestHostSync(force) {
     if (!state.socket || !state.room) {
       setSyncBtn("error", "No room");
       toast("Not connected to a room");
       return;
     }
-    if (state.sync.txActive) return;
-    if (state.isHost) {
-      // Host can run the same transaction to snap the room to themselves
-      beginHostSyncTransaction();
-      return;
-    }
+    if (state.sync.barrierActive) return;
     setSyncBtn("syncing");
-    state.sync.txActive = true;
-    state.sync._forceUntil = Date.now() + 6000;
-    // Ask host to pause, capture, broadcast, then resume
-    state.socket.emit("sync:negotiate", { force: true });
+    state.sync.barrierActive = true;
+    state.sync.barrierId = null;
+    state.sync.barrierDone = false;
     clearTimeout(state.sync._reqTimer);
     state.sync._reqTimer = setTimeout(() => {
-      if (state.sync.txActive) {
-        state.sync.txActive = false;
+      if (state.sync.barrierActive) {
+        state.sync.barrierActive = false;
+        state.applying = false;
         setSyncBtn("error", "Timed out");
         toast("Sync timed out — try again");
       }
-    }, 5500);
+    }, 6500);
+    state.socket.emit("sync:request", { force: true });
   }
 
-  /** Host-only: pause → capture → broadcast → short settle → resume */
-  function beginHostSyncTransaction() {
-    if (!state.isHost || !state.player || !state.socket) return;
-    if (state.sync.txActive) return;
-    state.sync.txActive = true;
+  function onSyncFreeze(msg) {
+    if (!state.isHost || !state.player) return;
+    const syncId = msg && msg.syncId;
+    state.sync.barrierActive = true;
+    state.sync.barrierId = syncId;
     setSyncBtn("syncing");
-
+    state.applying = true;
     const wasPlaying = !!state.player.isPlaying();
     state.sync.hostWasPlaying = wasPlaying;
-    state.applying = true; // block hostEvent loops while we pause
+    try { state.player.pause(); } catch (_) {}
+    clearTimeout(state.sync._freezeTimer);
+    state.sync._freezeTimer = setTimeout(() => {
+      let time = 0;
+      try { time = Number(state.player.getCurrentTime() || 0); } catch (_) {}
+      if (!time && msg && msg.estimatedTime) time = Number(msg.estimatedTime) || 0;
+      if (!state.socket) return;
+      state.socket.emit("sync:snapshot", { syncId, time, wasPlaying });
+    }, 200);
+  }
 
-    try {
-      state.player.pause();
-    } catch (_) {}
-
-    // Capture after pause settles
-    const captureAndBroadcast = () => {
-      const time = Number(state.player.getCurrentTime() || 0);
-      state.sync.seq = (state.sync.seq || 0) + 1;
-      const seq = state.sync.seq;
-      state.socket.emit("sync:host", {
-        playing: false, // everyone holds pause at the barrier
-        time,
-        rate: 1,
-        action: "commit",
-        seq,
-      });
-
-      // After clients had time to seek, resume if host was playing
-      clearTimeout(state.sync._txResume);
-      state.sync._txResume = setTimeout(() => {
-        state.applying = false;
-        if (state.sync.hostWasPlaying && state.isHost) {
-          try { state.player.play(); } catch (_) {}
-          state.socket.emit("sync:host", {
-            playing: true,
-            time: Number(state.player.getCurrentTime() || time),
-            rate: 1,
-            action: "play",
-            seq: state.sync.seq,
-          });
-        } else {
-          hostBroadcast("pause");
-        }
-        state.sync.txActive = false;
-        setSyncBtn("synced");
-        toast("Room synced");
-      }, 450);
-    };
-
-    // Brief pause so capture is stable (media seeked/paused)
-    clearTimeout(state.sync._txCapture);
-    state.sync._txCapture = setTimeout(captureAndBroadcast, 120);
-
-    // Safety: never leave host paused forever
-    clearTimeout(state.sync._txSafety);
-    state.sync._txSafety = setTimeout(() => {
-      if (!state.sync.txActive) return;
-      state.applying = false;
-      state.sync.txActive = false;
-      if (state.sync.hostWasPlaying) {
-        try { state.player.play(); } catch (_) {}
-        hostBroadcast("play");
+  function onSyncPrepare(msg) {
+    if (!msg || !state.player) return;
+    const syncId = msg.syncId;
+    if (state.sync.lastBarrierId === syncId && state.sync.barrierDone) return;
+    state.sync.barrierActive = true;
+    state.sync.barrierId = syncId;
+    state.sync.barrierDone = false;
+    state.applying = true;
+    setSyncBtn("syncing");
+    const target = Math.max(0, Number(msg.targetTime) || 0);
+    state.sync.targetTime = target;
+    state.sync.targetPlaying = false;
+    if (msg.video) {
+      const want = videoKey(msg.video);
+      const have = videoKey(state.player.current && state.player.current());
+      if (want && want !== have) {
+        try { state.player.load(msg.video, target); } catch (_) {}
       }
-      setSyncBtn("error", "Recovered");
-    }, 4000);
+    }
+    let readySent = false;
+    const finishReady = () => {
+      if (readySent) return;
+      if (!state.socket) return;
+      if (state.sync.barrierId !== syncId) return;
+      readySent = true;
+      state.socket.emit("sync:ready", { syncId, time: target });
+    };
+    try { state.player.pause(); } catch (_) {}
+    const cur = state.player.current && state.player.current();
+    const isHtml5 = cur && cur.provider === "html5";
+    const isVidking = !isHtml5 && (!cur || cur.provider === "vidking" || !!(cur && cur.tmdbId));
+    try {
+      if (isVidking && typeof state.player.forceSeek === "function") state.player.forceSeek(target);
+      else if (typeof state.player.seek === "function") state.player.seek(target);
+      else if (typeof state.player.reloadAt === "function") state.player.reloadAt(target);
+    } catch (_) {}
+    if (isHtml5) {
+      let tries = 0;
+      const poll = setInterval(() => {
+        tries++;
+        let tm = 0;
+        try { tm = Number(state.player.getCurrentTime() || 0); } catch (_) {}
+        if (Math.abs(tm - target) < 0.75 || tries > 25) { clearInterval(poll); finishReady(); }
+      }, 40);
+    } else {
+      setTimeout(finishReady, isVidking ? 750 : 300);
+    }
+    clearTimeout(state.sync._readySafety);
+    state.sync._readySafety = setTimeout(finishReady, 2800);
   }
 
-  function onSyncNegotiate() {
-    // Host receives negotiate request from a client
-    if (!state.isHost) return;
-    beginHostSyncTransaction();
+  function onSyncGo(msg) {
+    if (!msg || !state.player) return;
+    const syncId = msg.syncId;
+    if (state.sync.barrierId && syncId && state.sync.barrierId !== syncId) return;
+    clearTimeout(state.sync._reqTimer);
+    clearTimeout(state.sync._readySafety);
+    const target = Math.max(0, Number(msg.targetTime) || state.sync.targetTime || 0);
+    const wasPlaying = !!msg.wasPlaying;
+    const playAt = Number(msg.playAt) || (Date.now() + 500);
+    const serverTime = Number(msg.serverTime) || Date.now();
+    const offset = Date.now() - serverTime;
+    const waitMs = Math.max(0, Math.min(3000, playAt + offset - Date.now()));
+    state.applying = true;
+    try { state.player.pause(); } catch (_) {}
+    try {
+      const tnow = Number(state.player.getCurrentTime() || 0);
+      if (Math.abs(tnow - target) > 1.0) {
+        if (typeof state.player.forceSeek === "function") state.player.forceSeek(target);
+        else state.player.seek(target);
+      }
+    } catch (_) {}
+    clearTimeout(state.sync._goTimer);
+    state.sync._goTimer = setTimeout(() => {
+      try {
+        if (wasPlaying) state.player.play();
+        else state.player.pause();
+      } catch (_) {}
+      state.sync.targetPlaying = wasPlaying;
+      state.sync.targetTime = target;
+      state.sync.lastBarrierId = syncId;
+      state.sync.barrierDone = true;
+      state.sync.barrierActive = false;
+      state.applying = false;
+      setSyncBtn("synced", "Synced");
+      setSyncDot(0);
+      toast("Synced with room");
+      if (state.isHost && state.socket) {
+        setTimeout(() => {
+          try {
+            state.socket.emit("sync:host", {
+              playing: wasPlaying,
+              time: Number(state.player.getCurrentTime() || target),
+              rate: 1,
+              action: wasPlaying ? "play" : "pause",
+              seq: Date.now(),
+            });
+          } catch (_) {}
+        }, 100);
+      }
+    }, waitMs);
   }
+
+  function onSyncStatus(msg) {
+    if (!msg) return;
+    if (msg.phase === "waiting" && msg.readyCount != null) {
+      const btn = document.getElementById("syncToHost");
+      if (btn && state.sync.barrierActive) {
+        btn.disabled = true;
+        btn.innerHTML = '<i data-lucide="loader-2"></i> Syncing — ' + (msg.readyCount || 0) + "/" + (msg.total || "?");
+        try { if (window.lucide) lucide.createIcons({ nodes: [btn] }); } catch (_) {}
+      }
+    } else if (msg.phase === "timeout") {
+      setTimeout(() => {
+        if (state.sync.barrierActive) {
+          state.sync.barrierActive = false;
+          state.applying = false;
+          setSyncBtn("error", "Timeout");
+        }
+      }, 900);
+    }
+  }
+
+  function beginHostSyncTransaction() { requestHostSync(true); }
+  function onSyncNegotiate() {}
 
   function onSync(payload) {
     if (!payload) return;
@@ -1198,6 +1275,7 @@
 
   function hostBroadcast(action) {
     if (!state.isHost || !state.socket || !state.player) return;
+    if (state.sync.barrierActive && action === "tick") return;
     if (state.applying && action === "tick") return;
     const time = Number(state.player.getCurrentTime() || 0);
     const playing = !!state.player.isPlaying();
@@ -1290,6 +1368,10 @@
   }
 
   function pickMovie(card) {
+    if (card.dataset.type === "tv" && state.room && state.isHost) {
+      openTvEpisodePicker(card);
+      return;
+    }
     const video = {
       provider: "vidking",
       tmdbId: card.dataset.id,
@@ -1705,71 +1787,202 @@
 
   async function openRoomLibrary() {
     if (!state.isHost) return toast("Host only");
+    let libType = "movie";
+    let libCat = "trending";
+
     showModal(`<h3>Pick a title</h3>
-      <div class="search-row"><input id="rmLibQ" placeholder="Search..." /><button class="btn-primary sm" id="rmLibGo">Go</button></div>
-      <div id="rmLibGrid" class="movie-grid" style="max-height:50vh;overflow:auto"></div>
-      <div class="row"><button class="btn-ghost" id="rmLibClose">Close</button></div>`);
-    $("#rmLibClose").onclick = hideModal;
+      <div class="type-toggle rm-type-toggle" style="margin-bottom:10px">
+        <button type="button" class="typeBtn active" data-rm-type="movie">Movies</button>
+        <button type="button" class="typeBtn" data-rm-type="tv">TV Shows</button>
+      </div>
+      <div class="chips" id="rmLibCats" style="margin-bottom:10px;flex-wrap:wrap;gap:6px;display:flex">
+        <button type="button" class="chip active" data-rm-cat="trending">Trending</button>
+        <button type="button" class="chip" data-rm-cat="popular">Popular</button>
+        <button type="button" class="chip" data-rm-cat="new">New / On Air</button>
+        <button type="button" class="chip" data-rm-cat="top">Top Rated</button>
+      </div>
+      <div class="search-row"><input id="rmLibQ" placeholder="Search movies or TV..." /><button class="btn-primary sm" id="rmLibGo">Search</button></div>
+      <div id="rmLibGrid" class="movie-grid" style="max-height:45vh;overflow:auto;margin-top:10px"></div>
+      <div class="row" style="margin-top:10px"><button class="btn-ghost" id="rmLibClose">Close</button></div>`);
+
+    try { if (window.lucide) lucide.createIcons(); } catch (_) {}
+
     const fill = async (q) => {
-      const data = q
-        ? await WSMovies.search(q, "movie", 1)
-        : await WSMovies.fetchCategory("trending", "movie", 1);
-      $("#rmLibGrid").innerHTML = (data.results || []).map(WSMovies.cardHtml).join("") || "<p class='muted'>No results</p>";
+      const grid = $("#rmLibGrid");
+      if (!grid) return;
+      grid.innerHTML = "<p class='muted'>Loading…</p>";
+      try {
+        const data = q
+          ? await WSMovies.search(q, libType, 1)
+          : await WSMovies.fetchCategory(libCat, libType, 1);
+        const items = data.results || [];
+        grid.innerHTML = items.length
+          ? items.map(WSMovies.cardHtml).join("")
+          : "<p class='muted'>No results</p>";
+      } catch (err) {
+        grid.innerHTML = "<p class='muted'>Could not load titles</p>";
+      }
     };
-    fill("");
-    $("#rmLibGo").onclick = () => fill($("#rmLibQ").value.trim());
+
+    $("#rmLibClose").onclick = hideModal;
+    $("#rmLibGo").onclick = () => fill(($("#rmLibQ").value || "").trim());
+    $("#rmLibQ").onkeydown = (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        fill(($("#rmLibQ").value || "").trim());
+      }
+    };
+
+    document.querySelectorAll("[data-rm-type]").forEach((btn) => {
+      btn.onclick = () => {
+        document.querySelectorAll("[data-rm-type]").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        libType = btn.dataset.rmType === "tv" ? "tv" : "movie";
+        fill(($("#rmLibQ").value || "").trim());
+      };
+    });
+
+    document.querySelectorAll("[data-rm-cat]").forEach((btn) => {
+      btn.onclick = () => {
+        document.querySelectorAll("[data-rm-cat]").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        libCat = btn.dataset.rmCat || "trending";
+        const q = ($("#rmLibQ").value || "").trim();
+        if (!q) fill("");
+        else fill(q);
+      };
+    });
+
     $("#rmLibGrid").onclick = (e) => {
       const card = e.target.closest(".movie-card");
       if (!card) return;
-      e.stopPropagation();
-      hideModal();
-      pickMovie(card);
+      if (card.dataset.type === "tv") {
+        openTvEpisodePicker(card);
+      } else {
+        pickMovie(card);
+        hideModal();
+      }
     };
+
+    fill("");
   }
 
-  $("#hostBtn").onclick = () => {
-    if (!state.isHost || !state.room) return;
-    const r = state.room;
-    showModal(`<h3>Host panel</h3>
-      <div class="ws-field">
-        <span class="label">Room name</span>
-        <input class="ws-input" id="hpName" value="${esc(r.name || "")}" maxlength="48" autocomplete="off" />
-      </div>
-      <div class="hp-section">Room options</div>
-      <label class="ws-toggle">
-        <span><span class="tog-label">Public</span><span class="tog-hint">Listed in room browser</span></span>
-        <input type="checkbox" id="hpPub" ${r.isPublic ? "checked" : ""} />
-        <span class="track" aria-hidden="true"></span>
-      </label>
-      <label class="ws-toggle">
-        <span><span class="tog-label">Lock</span><span class="tog-hint">Block new joins</span></span>
-        <input type="checkbox" id="hpLock" ${r.locked ? "checked" : ""} />
-        <span class="track" aria-hidden="true"></span>
-      </label>
-      <label class="ws-toggle">
-        <span><span class="tog-label">Mute chat</span><span class="tog-hint">Only host can send messages</span></span>
-        <input type="checkbox" id="hpMute" ${r.chatMuted ? "checked" : ""} />
-        <span class="track" aria-hidden="true"></span>
-      </label>
-      <div class="row">
-        <button type="button" class="btn-ghost" id="hpClose">Close</button>
-        <button type="button" class="btn-primary" id="hpSave">Save</button>
+  /** TV: choose season + episode before loading into the room */
+  async function openTvEpisodePicker(card) {
+    const id = card.dataset.id;
+    const title = card.dataset.title || "TV Show";
+    const poster = card.dataset.poster || "";
+
+    showModal(`<h3>${esc(title)}</h3>
+      <p class="muted" style="margin-bottom:10px">Choose season & episode</p>
+      <div id="tvPickBody"><p class="muted">Loading seasons…</p></div>
+      <div class="row" style="margin-top:12px;gap:8px">
+        <button class="btn-ghost" id="tvPickBack">Back</button>
+        <button class="btn-primary" id="tvPickPlay" disabled>Play episode</button>
       </div>`);
-    $("#hpClose").onclick = hideModal;
-    $("#hpSave").onclick = () => {
-      state.socket.emit("room:meta", {
-        name: $("#hpName").value.trim(),
-        isPublic: $("#hpPub").checked,
-        locked: $("#hpLock").checked,
-        chatMuted: $("#hpMute").checked,
-      });
-      hideModal();
-      toast("Room settings saved");
+
+    let seasons = [];
+    let selSeason = 1;
+    let selEpisode = 1;
+    let episodes = [];
+
+    const body = $("#tvPickBody");
+    $("#tvPickBack").onclick = () => openRoomLibrary();
+
+    try {
+      const res = await fetch("/api/tmdb/tv/" + encodeURIComponent(id));
+      const data = await res.json();
+      seasons = data.seasons || [];
+      if (!seasons.length) {
+        // Fallback: allow manual S/E entry
+        seasons = [{ season: 1, name: "Season 1", episodeCount: 24 }];
+      }
+    } catch (_) {
+      seasons = [{ season: 1, name: "Season 1", episodeCount: 24 }];
+    }
+
+    const render = async () => {
+      const seasonOpts = seasons
+        .map(
+          (s) =>
+            `<option value="${s.season}" ${s.season === selSeason ? "selected" : ""}>S${s.season} · ${esc(s.name || "Season " + s.season)} (${s.episodeCount || "?"} ep)</option>`
+        )
+        .join("");
+
+      body.innerHTML = `
+        <div class="search-row" style="margin-bottom:10px">
+          <label class="muted" style="min-width:60px">Season</label>
+          <select id="tvSeason" class="input-select">${seasonOpts}</select>
+        </div>
+        <div id="tvEpList" class="tv-ep-list" style="max-height:40vh;overflow:auto"></div>`;
+
+      $("#tvSeason").onchange = async () => {
+        selSeason = Number($("#tvSeason").value) || 1;
+        await loadEps();
+      };
+      await loadEps();
     };
-  };
 
+    const loadEps = async () => {
+      const list = $("#tvEpList");
+      if (!list) return;
+      list.innerHTML = "<p class='muted'>Loading episodes…</p>";
+      try {
+        const res = await fetch("/api/tmdb/tv/" + encodeURIComponent(id) + "/season/" + selSeason);
+        const data = await res.json();
+        episodes = data.episodes || [];
+      } catch (_) {
+        episodes = [];
+      }
+      if (!episodes.length) {
+        // Manual fallback
+        const count = (seasons.find((s) => s.season === selSeason) || {}).episodeCount || 12;
+        episodes = Array.from({ length: Math.min(count, 40) }, (_, i) => ({
+          episode: i + 1,
+          name: "Episode " + (i + 1),
+        }));
+      }
+      selEpisode = episodes[0] ? episodes[0].episode : 1;
+      list.innerHTML = episodes
+        .map(
+          (ep) => `<button type="button" class="tv-ep-btn ${ep.episode === selEpisode ? "active" : ""}" data-ep="${ep.episode}">
+            <span class="tv-ep-num">E${ep.episode}</span>
+            <span class="tv-ep-name">${esc(ep.name || "Episode " + ep.episode)}</span>
+          </button>`
+        )
+        .join("");
+      list.onclick = (e) => {
+        const btn = e.target.closest("[data-ep]");
+        if (!btn) return;
+        selEpisode = Number(btn.dataset.ep) || 1;
+        list.querySelectorAll(".tv-ep-btn").forEach((b) => b.classList.toggle("active", Number(b.dataset.ep) === selEpisode));
+        $("#tvPickPlay").disabled = false;
+      };
+      $("#tvPickPlay").disabled = false;
+    };
 
-  /* Fix: picking from library while in a room — stay in room */
+    $("#tvPickPlay").onclick = () => {
+      const video = {
+        provider: "vidking",
+        tmdbId: id,
+        mediaType: "tv",
+        title: title + " · S" + selSeason + "E" + selEpisode,
+        poster,
+        season: selSeason,
+        episode: selEpisode,
+      };
+      if (state.room && state.isHost) {
+        loadVideo(video, 0, true);
+        toast("Loading " + video.title);
+        hideModal();
+      } else {
+        toast("Only the host can change the show");
+      }
+    };
+
+    await render();
+  }
+
   const origPick = pickMovie;
   document.addEventListener("click", () => {}, true);
 

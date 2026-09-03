@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@500;700&family=Dancing+Script:wght@500;600&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;600&family=Nunito:wght@600;700;800&family=Outfit:wght@400;500;600;700;800&family=Pacifico&family=Plus+Jakarta+Sans:wght@500;600;700&family=Poppins:wght@400;600;700;800&family=Press+Start+2P&family=Quicksand:wght@500;600;700&family=Rubik:wght@500;600;700&family=Space+Grotesk:wght@500;600;700&family=VT323&display=swap" rel="stylesheet">
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="stylesheet" href="/style.css?v=formSync1" />
+  <link rel="stylesheet" href="/style.css?v=20260903tvsync" />
 </head>
 <body>
   <div id="app">
@@ -85,7 +85,7 @@
         <!-- LIBRARY -->
         <section class="page" data-page="library">
           <div class="lib-head">
-            <h2>Movie Library</h2>
+            <h2>Movies & TV</h2>
             <div class="type-toggle">
               <button class="typeBtn active" data-type="movie">Movies</button>
               <button class="typeBtn" data-type="tv">TV</button>
@@ -369,7 +369,7 @@
     var meName = document.getElementById("meName");
     var meAvatar = document.getElementById("meAvatar");
     if (meName) meName.textContent = profile.displayName || profile.name;
-    // Avatar+ring painted by app.js after ws-entered (paintAvatar)
+    // Avatar+ring painted by app.js?v=20260903tvsync after ws-entered (paintAvatar)
     window.__wsProfile = profile;
     window.dispatchEvent(new CustomEvent("ws-entered", { detail: profile }));
     return false;
@@ -387,17 +387,17 @@
     }
   });
   </script>
-  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js?v=formSync1"></script>
-  <script src="/socket.io/socket.io.js?v=formSync1"></script>
-  <script src="/config.js?v=formSync1"></script>
-  <script src="/providers/vidking.js?v=formSync1"></script>
-  <script src="/providers/youtube.js?v=formSync1"></script>
-  <script src="/providers/html5.js?v=formSync1"></script>
-  <script src="/components/player.js?v=formSync1"></script>
-  <script src="/components/movies.js?v=formSync1"></script>
-  <script src="/components/cosmetics.js?v=formSync1"></script>
-  <script src="/components/voice.js?v=formSync1"></script>
-  <script src="/app.js?v=formSync1"></script>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js?v=20260903tvsync"></script>
+  <script src="/socket.io/socket.io.js?v=20260903tvsync"></script>
+  <script src="/config.js?v=20260903tvsync"></script>
+  <script src="/providers/vidking.js?v=20260903tvsync"></script>
+  <script src="/providers/youtube.js?v=20260903tvsync"></script>
+  <script src="/providers/html5.js?v=20260903tvsync"></script>
+  <script src="/components/player.js?v=20260903tvsync"></script>
+  <script src="/components/movies.js?v=20260903tvsync"></script>
+  <script src="/components/cosmetics.js?v=20260903tvsync"></script>
+  <script src="/components/voice.js?v=20260903tvsync"></script>
+  <script src="/app.js?v=20260903tvsync"></script>
 </body>
 </html>
 

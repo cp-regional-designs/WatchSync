@@ -3396,3 +3396,32 @@ textarea.ws-input,
   padding-right: 36px;
   cursor: pointer;
 }
+
+/* TV episode picker */
+.tv-ep-list { display: flex; flex-direction: column; gap: 6px; }
+.tv-ep-btn {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 10px;
+  border: 1px solid rgba(157,92,255,.2);
+  background: rgba(14,14,21,.8); color: #fff;
+  text-align: left; cursor: pointer; transition: .15s ease;
+}
+.tv-ep-btn:hover, .tv-ep-btn.active {
+  border-color: #9D5CFF; background: rgba(157,92,255,.15);
+}
+.tv-ep-num { font-weight: 700; color: #C084FC; min-width: 36px; }
+.tv-ep-name { flex: 1; font-size: .92rem; }
+.input-select {
+  flex: 1; padding: 10px 12px; border-radius: 10px;
+  border: 1px solid rgba(157,92,255,.25);
+  background: #0E0E15; color: #fff;
+}
+.rm-type-toggle { display: flex; gap: 8px; }
+.rm-type-toggle .typeBtn {
+  flex: 1; padding: 8px 12px; border-radius: 10px;
+  border: 1px solid rgba(157,92,255,.25);
+  background: transparent; color: #A7A7B5; cursor: pointer;
+}
+.rm-type-toggle .typeBtn.active {
+  background: rgba(157,92,255,.2); color: #fff; border-color: #9D5CFF;
+}

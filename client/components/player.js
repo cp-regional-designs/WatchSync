@@ -74,6 +74,12 @@
           });
         }
       }
+      const nextBtn = document.getElementById("nextSourceBtn");
+      if (nextBtn) {
+        const showNext = isVk && host;
+        nextBtn.classList.toggle("hidden", !showNext);
+        nextBtn.style.display = showNext ? "" : "none";
+      }
     }
 
     function setLocked(on) {
@@ -161,6 +167,11 @@
       },
       refreshLock() {
         updateLockUI();
+      },
+      nextSource() {
+        if (provider && typeof provider.nextSource === "function") {
+          provider.nextSource();
+        }
       },
       destroy() {
         clearTimeout(unlockTimer);

@@ -1316,10 +1316,19 @@
   function hostEvent(ev) {
     if (!state.isHost || state.applying) return;
     const type = (ev && ev.type) || "tick";
+    // When host switches embed source, push updated video so viewers match
+    if (type === "source" && state.player && state.player.current) {
+      const cur = state.player.current();
+      if (cur && typeof ev.embedIndex === "number") {
+        cur.embedIndex = ev.embedIndex;
+        if (state.socket) state.socket.emit("video:load", cur);
+      }
+    }
     const action =
       type === "play" ? "play" :
       type === "pause" ? "pause" :
       type === "seek" ? "seek" :
+      type === "source" ? "seek" :
       type === "time" ? "tick" : type;
     hostBroadcast(action);
   }
@@ -1665,6 +1674,28 @@
       toast(code);
     }
   });
+
+    const nextSrcBtn = $("#nextSourceBtn");
+  if (nextSrcBtn) {
+    nextSrcBtn.onclick = () => {
+      if (!state.isHost || !state.player) return toast("Host only");
+      try {
+        if (typeof state.player.nextSource === "function") {
+          state.player.nextSource();
+        } else {
+          const cur = state.player.current && state.player.current();
+          if (!cur) return;
+          cur.embedIndex = ((Number(cur.embedIndex) || 0) + 1) % 5;
+          state.player.load(cur, state.player.getCurrentTime() || 0);
+          if (state.socket) state.socket.emit("video:load", cur);
+        }
+        toast("Trying next embed source…");
+      } catch (err) {
+        console.warn(err);
+        toast("Could not switch source");
+      }
+    };
+  }
 
   $("#playBtn").onclick = () => {
     state.player?.play();

@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@500;700&family=Dancing+Script:wght@500;600&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;600&family=Nunito:wght@600;700;800&family=Outfit:wght@400;500;600;700;800&family=Pacifico&family=Plus+Jakarta+Sans:wght@500;600;700&family=Poppins:wght@400;600;700;800&family=Press+Start+2P&family=Quicksand:wght@500;600;700&family=Rubik:wght@500;600;700&family=Space+Grotesk:wght@500;600;700&family=VT323&display=swap" rel="stylesheet">
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="stylesheet" href="/style.css?v=20261017sync2" />
+  <link rel="stylesheet" href="/style.css?v=20261018multisrc" />
 </head>
 <body>
   <div id="app">
@@ -229,6 +229,9 @@
             <button type="button" id="unlockPlayerBtn" class="unlock-chip host-only hidden" title="Unlock player clicks for 15s">
               <i data-lucide="unlock"></i> Unlock 15s
             </button>
+            <button type="button" id="nextSourceBtn" class="unlock-chip host-only hidden" title="Try another embed source if player is black">
+              <i data-lucide="shuffle"></i> Next source
+            </button>
             <div class="transport host-only hidden" aria-label="Host playback controls">
               <button type="button" id="skipBack" title="Back 5s"><i data-lucide="rewind"></i><span>5s</span></button>
               <button type="button" id="playBtn" class="transport-primary" title="Play"><i data-lucide="play"></i></button>
@@ -369,7 +372,7 @@
     var meName = document.getElementById("meName");
     var meAvatar = document.getElementById("meAvatar");
     if (meName) meName.textContent = profile.displayName || profile.name;
-    // Avatar+ring painted by app.js?v=20261017sync2 after ws-entered (paintAvatar)
+    // Avatar+ring painted by app.js?v=20261018multisrc after ws-entered (paintAvatar)
     window.__wsProfile = profile;
     window.dispatchEvent(new CustomEvent("ws-entered", { detail: profile }));
     return false;
@@ -387,17 +390,17 @@
     }
   });
   </script>
-  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js?v=20261017sync2"></script>
-  <script src="/socket.io/socket.io.js?v=20261017sync2"></script>
-  <script src="/config.js?v=20261017sync2"></script>
-  <script src="/providers/vidking.js?v=20261017sync2"></script>
-  <script src="/providers/youtube.js?v=20261017sync2"></script>
-  <script src="/providers/html5.js?v=20261017sync2"></script>
-  <script src="/components/player.js?v=20261017sync2"></script>
-  <script src="/components/movies.js?v=20261017sync2"></script>
-  <script src="/components/cosmetics.js?v=20261017sync2"></script>
-  <script src="/components/voice.js?v=20261017sync2"></script>
-  <script src="/app.js?v=20261017sync2"></script>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js?v=20261018multisrc"></script>
+  <script src="/socket.io/socket.io.js?v=20261018multisrc"></script>
+  <script src="/config.js?v=20261018multisrc"></script>
+  <script src="/providers/vidking.js?v=20261018multisrc"></script>
+  <script src="/providers/youtube.js?v=20261018multisrc"></script>
+  <script src="/providers/html5.js?v=20261018multisrc"></script>
+  <script src="/components/player.js?v=20261018multisrc"></script>
+  <script src="/components/movies.js?v=20261018multisrc"></script>
+  <script src="/components/cosmetics.js?v=20261018multisrc"></script>
+  <script src="/components/voice.js?v=20261018multisrc"></script>
+  <script src="/app.js?v=20261018multisrc"></script>
 </body>
 </html>
 

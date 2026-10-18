@@ -566,6 +566,7 @@ io.on("connection", (socket) => {
       season: mediaType === "tv" ? Number(video.season) || 1 : null,
       episode: mediaType === "tv" ? Number(video.episode) || 1 : null,
       color: (video.color || "9D5CFF").replace("#", ""),
+      embedIndex: typeof video.embedIndex === "number" ? video.embedIndex : 0,
     };
     rooms.setVideo(room.code, packed);
     const next = rooms.publicRoom(rooms.get(room.code));

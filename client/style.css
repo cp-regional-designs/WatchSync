@@ -3429,3 +3429,42 @@ textarea.ws-input,
 .rm-type-toggle .typeBtn.active {
   background: rgba(157,92,255,.2); color: #fff; border-color: #9D5CFF;
 }
+
+
+/* Multi-source embed status overlay */
+.embed-status {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background: rgba(0,0,0,0.55);
+}
+.embed-status[hidden] { display: none !important; }
+.embed-status-card {
+  pointer-events: auto;
+  max-width: 360px;
+  margin: 16px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: rgba(12,12,18,0.95);
+  border: 1px solid rgba(157,92,255,0.35);
+  text-align: center;
+  color: #e8e8f0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.embed-status-card p { margin: 0 0 8px; }
+.embed-status-meta { color: #9a9ab0; font-size: 12px; }
+.embed-status-card .btn-primary {
+  margin-top: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 0;
+  background: linear-gradient(180deg, #9D5CFF, #7c3aed);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}

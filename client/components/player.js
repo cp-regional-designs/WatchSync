@@ -21,7 +21,12 @@
 
     function showLoading(on, poster) {
       if (loading) loading.hidden = !on;
-      if (posterEl && poster) posterEl.style.backgroundImage = `url(${poster})`;
+      if (posterEl) {
+        if (poster) posterEl.style.backgroundImage = `url(${poster})`;
+        // Keep poster visible only while loading so iframe is never covered after ready
+        posterEl.style.opacity = on ? "1" : "0";
+        posterEl.style.pointerEvents = "none";
+      }
     }
 
     function updateLockUI() {

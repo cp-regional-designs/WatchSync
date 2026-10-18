@@ -360,10 +360,14 @@ body.couples-mode .react-date-only { display: inline-flex; }
   position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000;
 }
 .player-poster {
-  position: absolute; inset: 0;
+  position: absolute; inset: 0; z-index: 1;
   background-size: cover; background-position: center; filter: blur(18px) brightness(0.35);
   transform: scale(1.08);
+  transition: opacity 0.35s ease;
+  opacity: 1;
+  pointer-events: none;
 }
+.player-stage { z-index: 2; }
 .player-loading {
   position: absolute; inset: 0; z-index: 3;
   display: grid; place-items: center; align-content: center; gap: 10px;

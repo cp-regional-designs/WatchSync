@@ -1,8 +1,11 @@
 /**
  * Vidking embed provider
- * IMPORTANT: Do NOT reload the iframe on every play/tick — that causes
- * "Loading content… / Refreshes…" loops. Only recreate the iframe when
- * the media changes or a real seek is required.
+ *
+ * Critical rules:
+ *  - Never reload the iframe on every play/tick (causes "Loading content…" loops).
+ *  - Start-time param is `progress` (seconds), NOT `t`.
+ *  - Pause hides the frame so third-party audio actually stops; play rebuilds once.
+ *  - Soft seeks only update the local clock; hard seeks rebuild with progress=.
  */
 (function (global) {
   function create(container) {
@@ -15,6 +18,7 @@
     let loadTimer = null;
     let lastReloadAt = 0;
     let lastSeekTarget = -1;
+    let ready = false;
 
     function now() {
       return Date.now();
@@ -22,11 +26,12 @@
 
     function estimatedTime() {
       if (!playing) return baseTime;
-      return Math.max(0, baseTime + ((now() - baseWall) / 1000));
+      return Math.max(0, baseTime + (now() - baseWall) / 1000);
     }
 
     function embedUrl(video, startAt) {
       const id = video.tmdbId || video.id;
+      if (!id) return "";
       const mediaType = video.mediaType === "tv" || video.season ? "tv" : "movie";
       let url;
       if (mediaType === "tv") {
@@ -37,9 +42,11 @@
         url = `https://www.vidking.net/embed/movie/${id}`;
       }
       const params = new URLSearchParams();
-      params.set("color", (video.color || "9D5CFF").replace("#", ""));
-      if (startAt && startAt > 1) params.set("t", Math.floor(startAt));
-      // autoPlay only when we intend to play
+      const color = String(video.color || global.WS_CONFIG?.vidkingColor || "9D5CFF").replace("#", "");
+      params.set("color", color);
+      // Vidking docs: `progress` = start time in seconds (NOT `t`)
+      const t = Math.floor(Math.max(0, Number(startAt) || 0));
+      if (t > 0) params.set("progress", String(t));
       if (playing) params.set("autoPlay", "true");
       return `${url}?${params.toString()}`;
     }
@@ -50,8 +57,26 @@
         try {
           iframe.src = "about:blank";
         } catch (_) {}
-        iframe.remove();
+        try {
+          iframe.remove();
+        } catch (_) {}
         iframe = null;
+      }
+      ready = false;
+    }
+
+    function showPausedOverlay(on) {
+      let ov = container.querySelector("[data-vk-paused]");
+      if (on) {
+        if (!ov) {
+          ov = document.createElement("div");
+          ov.setAttribute("data-vk-paused", "1");
+          ov.className = "vk-paused";
+          ov.innerHTML = "<span>Paused</span>";
+          container.appendChild(ov);
+        }
+      } else if (ov) {
+        ov.remove();
       }
     }
 
@@ -63,52 +88,65 @@
       baseWall = now();
       lastSeekTarget = t;
       lastReloadAt = now();
+      ready = false;
+
+      const src = embedUrl(videoMeta, t);
+      if (!src) {
+        onEvent({ type: "error", message: "Missing TMDB id for Vidking embed" });
+        return;
+      }
 
       iframe = document.createElement("iframe");
       iframe.className = "player-frame";
-      iframe.allow = "autoplay; fullscreen; encrypted-media; picture-in-picture";
+      iframe.setAttribute("allow", "autoplay; fullscreen; encrypted-media; picture-in-picture");
       iframe.allowFullscreen = true;
-      iframe.setAttribute("referrerpolicy", "no-referrer");
-      iframe.src = embedUrl(videoMeta, t);
-      iframe.addEventListener("load", () => onEvent({ type: "ready", time: baseTime }));
+      // no-referrer can break some CDN chains; default referrer is safer for embeds
+      iframe.setAttribute("referrerpolicy", "origin-when-cross-origin");
+      iframe.setAttribute("loading", "eager");
+      iframe.src = src;
+      iframe.addEventListener("load", () => {
+        ready = true;
+        onEvent({ type: "ready", time: baseTime });
+      });
       container.appendChild(iframe);
       clearTimeout(loadTimer);
-      // ready fallback so loading UI clears even if load event is flaky
-      loadTimer = setTimeout(() => onEvent({ type: "ready", time: baseTime }), 2500);
+      // Fallback so loading UI clears even if load event is delayed
+      loadTimer = setTimeout(() => {
+        ready = true;
+        onEvent({ type: "ready", time: baseTime });
+      }, 3500);
     }
 
     function load(video, startAt = 0) {
       videoMeta = video;
-      playing = true; // initial load starts in playing mode for host start
-      const ov = container.querySelector("[data-vk-paused]");
-      if (ov) ov.remove();
+      playing = true;
+      showPausedOverlay(false);
       buildFrame(startAt || 0);
       onEvent({ type: "load", time: baseTime });
     }
 
     /**
-     * Recreate iframe only when necessary (real seek / first load).
-     * Throttled to prevent Loading content loops.
+     * Rebuild iframe only when necessary.
+     * Throttled hard to avoid Loading-content loops during sync ticks.
      */
     function hardSeek(t, { force } = {}) {
       if (!videoMeta) return;
       const target = Math.max(0, Number(t) || 0);
       const wall = now();
       const est = estimatedTime();
-      // Skip reload if we recently loaded near this time
+
       if (
         !force &&
         iframe &&
-        wall - lastReloadAt < 4000 &&
-        Math.abs(est - target) < 12 &&
-        Math.abs(lastSeekTarget - target) < 12
+        wall - lastReloadAt < 5000 &&
+        Math.abs(est - target) < 15 &&
+        Math.abs(lastSeekTarget - target) < 15
       ) {
         baseTime = target;
         baseWall = wall;
         return;
       }
-      // Also skip if target is essentially "now" while already playing with a live frame
-      if (!force && iframe && playing && Math.abs(est - target) < 5 && wall - lastReloadAt < 8000) {
+      if (!force && iframe && playing && Math.abs(est - target) < 6 && wall - lastReloadAt < 10000) {
         baseTime = target;
         baseWall = wall;
         return;
@@ -117,20 +155,17 @@
     }
 
     function play() {
-      // Resume without reloading when possible
       baseTime = estimatedTime();
       baseWall = now();
       const wasPlaying = playing;
       playing = true;
-      const ov = container.querySelector("[data-vk-paused]");
-      if (ov) ov.remove();
+      showPausedOverlay(false);
 
       if (!iframe) {
-        // Frame was destroyed on pause — rebuild once
         if (videoMeta) buildFrame(baseTime);
       } else if (!wasPlaying) {
-        // Already have a frame: do NOT reload. Embed may still be paused internally;
-        // a soft rebuild only if frozen for a long time is handled by explicit seek/force.
+        // Frame still present from soft-pause path — leave it.
+        // If it was torn down, buildFrame above already ran.
       }
       onEvent({ type: "play", time: baseTime });
     }
@@ -139,16 +174,9 @@
       baseTime = estimatedTime();
       baseWall = now();
       playing = false;
-      // Tear down iframe so third-party player actually stops (no silent desync)
+      // Tear down so third-party player actually stops (no silent audio desync)
       destroyFrame();
-      let ov = container.querySelector("[data-vk-paused]");
-      if (!ov) {
-        ov = document.createElement("div");
-        ov.setAttribute("data-vk-paused", "1");
-        ov.className = "vk-paused";
-        ov.innerHTML = "<span>Paused</span>";
-        container.appendChild(ov);
-      }
+      showPausedOverlay(true);
       onEvent({ type: "pause", time: baseTime });
     }
 
@@ -166,12 +194,12 @@
       isPlaying() {
         return playing;
       },
-      /** Force reload at time — used only for manual Sync / large drift */
       forceSeek(t) {
         hardSeek(t, { force: true });
       },
       destroy() {
         destroyFrame();
+        showPausedOverlay(false);
         videoMeta = null;
       },
       setHandler(fn) {
